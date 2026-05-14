@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "461118792329",
+    "project_id": "smartfloorplan-app",
+    "storage_bucket": "smartfloorplan-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:461118792329:android:37efbabae9153271d71c58",
+        "android_client_info": {
+          "package_name": "com.example.smart_floor_plan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp0T-d2bhaBeS0o9ZrSPypmlmwiA4di90"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
