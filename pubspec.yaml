@@ -19,6 +19,8 @@ dependencies:
 
   # Pastikan tambahkan ini untuk memutar video splash
   video_player: ^2.8.1
+  image_picker: ^1.2.2
+  image: ^4.8.0
 
 dev_dependencies:
   flutter_test:
@@ -30,5 +32,5 @@ flutter:
 
   # Gabungkan semua asset di sini
   assets:
-    - assets/videos/splash_bg.mp4
-    - assets/images/logodenah.png
+    - assets/videos/
+    - assets/images/
