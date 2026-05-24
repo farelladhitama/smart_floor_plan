@@ -16,7 +16,7 @@ class KitchenFurniture {
 
     final Paint outlinePaint = Paint()
       ..color = lineColor.withValues(alpha: 0.22)
-      ..strokeWidth = 1.0
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     final double counterDepth = math.min(12.0, roomRect.height * 0.18);

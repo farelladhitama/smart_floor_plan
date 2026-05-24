@@ -34,12 +34,12 @@ class BedFurniture {
 
     final Paint outlinePaint = Paint()
       ..color = lineColor.withValues(alpha: 0.22)
-      ..strokeWidth = 1.05
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     final Paint detailPaint = Paint()
       ..color = lineColor.withValues(alpha: 0.17)
-      ..strokeWidth = 0.9
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     canvas.drawRRect(

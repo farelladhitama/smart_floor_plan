@@ -16,7 +16,7 @@ class CarFurniture {
 
     final Paint outlinePaint = Paint()
       ..color = lineColor.withValues(alpha: 0.23)
-      ..strokeWidth = 1.05
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     final double carWidth = math.min(roomRect.width * 0.52, 46);

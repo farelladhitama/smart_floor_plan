@@ -17,7 +17,7 @@ class SofaFurniture {
 
     final Paint outlinePaint = Paint()
       ..color = lineColor.withValues(alpha: 0.21)
-      ..strokeWidth = 1.05
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     final double sofaWidth = math.min(

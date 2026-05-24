@@ -16,7 +16,7 @@ class DiningFurniture {
 
     final Paint outlinePaint = Paint()
       ..color = lineColor.withValues(alpha: 0.22)
-      ..strokeWidth = 0.95
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     final double tableWidth = math.min(roomRect.width * 0.42, 43);

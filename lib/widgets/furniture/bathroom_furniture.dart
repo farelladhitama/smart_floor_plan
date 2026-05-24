@@ -16,7 +16,7 @@ class BathroomFurniture {
 
     final Paint outlinePaint = Paint()
       ..color = lineColor.withValues(alpha: 0.23)
-      ..strokeWidth = 0.95
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke;
 
     final double showerSize = math.min(
