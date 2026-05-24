@@ -22,6 +22,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   static const Color orange = Color(0xFFE47B3E);
   static const Color background = Color(0xFFF5F7FA);
   static const Color borderColor = Color(0xFFE2E8F0);
+  static const Color mutedText = Color(0xFF64748B);
 
   @override
   Widget build(BuildContext context) {
@@ -50,24 +51,24 @@ class HasilDenahPage extends GetView<HasilDenahController> {
 
             return Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1080),
+                constraints: const BoxConstraints(maxWidth: 1120),
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
-                    isMobile ? 16 : 24,
-                    20,
-                    isMobile ? 16 : 24,
-                    112,
+                    isMobile ? 14 : 22,
+                    18,
+                    isMobile ? 14 : 22,
+                    110,
                   ),
                   child: isMobile
                       ? Column(
                           children: [
                             _buildHeaderCard(),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 16),
                             _buildCanvasCard(isMobile: true),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 16),
                             _buildLegendCard(),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 16),
                             _buildRoomSummaryCard(),
                           ],
                         )
@@ -75,21 +76,21 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
-                              width: 310,
+                              width: 300,
                               child: Column(
                                 children: [
                                   _buildHeaderCard(),
-                                  const SizedBox(height: 18),
+                                  const SizedBox(height: 16),
                                   _buildLegendCard(),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            const SizedBox(width: 18),
                             Expanded(
                               child: Column(
                                 children: [
                                   _buildCanvasCard(isMobile: false),
-                                  const SizedBox(height: 18),
+                                  const SizedBox(height: 16),
                                   _buildRoomSummaryCard(),
                                 ],
                               ),
@@ -109,17 +110,17 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   Widget _buildHeaderCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [navy, navyLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: navy.withValues(alpha: 0.16),
+            color: navy.withValues(alpha: 0.15),
             blurRadius: 22,
             offset: const Offset(0, 11),
           ),
@@ -129,38 +130,39 @@ class HasilDenahPage extends GetView<HasilDenahController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
               Icons.architecture_rounded,
               color: orange,
-              size: 33,
+              size: 32,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           const Text(
             'Denah Rumah 2D',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 23,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 7),
           Text(
             'Layout otomatis dengan pembagian ruang natural, dinding blueprint, dan akses pintu antarruang.',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.75),
-              fontSize: 13,
-              height: 1.48,
+              color: Colors.white.withValues(alpha: 0.76),
+              fontSize: 12.5,
+              height: 1.47,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 19),
           Row(
             children: [
               Expanded(
@@ -170,7 +172,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                   icon: Icons.straighten_rounded,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 9),
               Expanded(
                 child: _buildInfoTile(
                   title: 'Panjang',
@@ -180,7 +182,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 9),
           Obx(
             () => Row(
               children: [
@@ -191,7 +193,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                     icon: Icons.meeting_room_rounded,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 9),
                 Expanded(
                   child: _buildInfoTile(
                     title: 'Area Ruang',
@@ -202,13 +204,13 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 17),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(13),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: orange.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(16),
+              color: orange.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(15),
               border: Border.all(
                 color: orange.withValues(alpha: 0.18),
               ),
@@ -219,15 +221,15 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                 Icon(
                   Icons.tips_and_updates_rounded,
                   color: orange,
-                  size: 21,
+                  size: 20,
                 ),
-                SizedBox(width: 9),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Zoom denah untuk melihat detail pintu, ukuran ruang, dan jalur akses.',
+                    'Zoom untuk melihat detail pintu, ukuran ruang, dan jalur akses. Gunakan Edit untuk mengatur posisi, ukuran, serta rotasi ruang.',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 11.7,
                       height: 1.42,
                       fontWeight: FontWeight.w600,
                     ),
@@ -247,17 +249,17 @@ class HasilDenahPage extends GetView<HasilDenahController> {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.09),
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, color: orange, size: 19),
+          Icon(icon, color: orange, size: 18),
           const SizedBox(width: 7),
           Expanded(
             child: Column(
@@ -267,8 +269,8 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                   title,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.66),
-                    fontSize: 10.5,
+                    color: Colors.white.withValues(alpha: 0.68),
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -278,7 +280,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -293,16 +295,16 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   Widget _buildCanvasCard({required bool isMobile}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 14 : 18),
+      padding: EdgeInsets.all(isMobile ? 13 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(25),
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: navy.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 9),
+            color: navy.withValues(alpha: 0.045),
+            blurRadius: 19,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -318,7 +320,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                       'Preview Arsitektural',
                       style: TextStyle(
                         color: navy,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -326,8 +328,8 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                     Text(
                       'Denah blueprint dengan pintu dan ukuran ruang',
                       style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 12.5,
+                        color: mutedText,
+                        fontSize: 11.8,
                       ),
                     ),
                   ],
@@ -335,35 +337,35 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
+                  horizontal: 9,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: orange.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(11),
                 ),
                 child: const Text(
                   'SMART PLAN',
                   style: TextStyle(
                     color: orange,
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            height: isMobile ? 560 : 680,
+            height: isMobile ? 500 : 620,
             decoration: BoxDecoration(
               color: const Color(0xFFF4F7FA),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(19),
               border: Border.all(color: borderColor),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(19),
               child: Obx(
                 () => InteractiveViewer(
                   minScale: 0.75,
@@ -382,22 +384,25 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 11),
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.pinch_rounded,
-                color: Color(0xFF64748B),
-                size: 17,
+                color: mutedText,
+                size: 16,
               ),
               SizedBox(width: 6),
-              Text(
-                'Cubit atau scroll untuk zoom • geser untuk melihat detail',
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Text(
+                  'Cubit atau scroll untuk zoom • geser untuk melihat detail',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: mutedText,
+                    fontSize: 10.8,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -410,10 +415,10 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   Widget _buildLegendCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(21),
         border: Border.all(color: borderColor),
       ),
       child: const Column(
@@ -427,10 +432,10 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               fontWeight: FontWeight.w800,
             ),
           ),
-          SizedBox(height: 13),
+          SizedBox(height: 12),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 7,
+            runSpacing: 7,
             children: [
               _LegendItem(color: Color(0xFFFFF3DD), label: 'Kamar'),
               _LegendItem(color: Color(0xFFFFF9EC), label: 'R. Tamu'),
@@ -449,10 +454,10 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   Widget _buildRoomSummaryCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(21),
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -462,24 +467,24 @@ class HasilDenahPage extends GetView<HasilDenahController> {
             'Rincian Ruangan',
             style: TextStyle(
               color: navy,
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 13),
           Obx(
             () => Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 9,
+              runSpacing: 9,
               children: controller.currentRooms.map((room) {
                 return Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 11,
+                    horizontal: 11,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(13),
                     border: Border.all(color: borderColor),
                   ),
                   child: Row(
@@ -493,21 +498,21 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 7),
                       Text(
                         room.nama,
                         style: const TextStyle(
                           color: navy,
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 7),
                       Text(
                         '${room.area.toStringAsFixed(1)} m²',
                         style: const TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11.5,
+                          color: mutedText,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -547,7 +552,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 13),
         decoration: BoxDecoration(
           color: Colors.white,
           border: const Border(
@@ -568,7 +573,10 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                 label: 'EDIT',
                 icon: Icons.design_services_rounded,
                 color: navy,
-                onTap: controller.editDenah,
+                onTap: () => controller.editDenah(
+                  landWidth: inputLebarRumah,
+                  landLength: inputPanjangRumah,
+                ),
               ),
             ),
             const SizedBox(width: 12),

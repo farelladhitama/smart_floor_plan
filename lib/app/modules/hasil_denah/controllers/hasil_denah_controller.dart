@@ -10,29 +10,28 @@ import 'package:smart_floor_plan/app/modules/rab/views/rab_page.dart';
 class HasilDenahController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
 
-  /// Edit Denah dan RAB lama masih menggunakan ukuran visual berbasis pixel.
-  /// Engine generate baru menggunakan satuan meter.
-  /// Skala ini menjadi jembatan sementara agar fitur lama tetap berjalan.
-  final double skala = 20.0;
-
-  final currentRooms = <RoomModel>[].obs;
-  final isSaved = false.obs;
+  final RxList<RoomModel> currentRooms = <RoomModel>[].obs;
+  final RxBool isSaved = false.obs;
 
   void setInitialRooms(List<RoomModel> rooms) {
     if (currentRooms.isEmpty) {
-      currentRooms.assignAll(rooms);
+      currentRooms.assignAll(
+        rooms.map((room) => room.copyWith()).toList(),
+      );
       isSaved.value = false;
     }
   }
 
   void resetRooms(List<RoomModel> rooms) {
-    currentRooms.assignAll(rooms);
+    currentRooms.assignAll(
+      rooms.map((room) => room.copyWith()).toList(),
+    );
     isSaved.value = false;
   }
 
   double get totalRoomArea {
-    return currentRooms.fold(
-      0,
+    return currentRooms.fold<double>(
+      0.0,
       (total, room) => total + room.area,
     );
   }
@@ -56,22 +55,27 @@ class HasilDenahController extends GetxController {
     );
   }
 
-  Future<void> editDenah() async {
+  Future<void> editDenah({
+    required double landWidth,
+    required double landLength,
+  }) async {
     if (Get.isRegistered<EditDenahController>()) {
       Get.delete<EditDenahController>();
     }
 
     Get.put(EditDenahController());
 
-    final result = await Get.to(
+    final dynamic result = await Get.to(
       () => EditDenahPage(
-        initialRooms: _convertMetersToLegacyPixels(currentRooms.toList()),
+        initialRooms: currentRooms.map((room) => room.copyWith()).toList(),
+        landWidth: landWidth,
+        landLength: landLength,
       ),
     );
 
     if (result != null && result is List<RoomModel>) {
       currentRooms.assignAll(
-        _convertLegacyPixelsToMeters(result),
+        result.map((room) => room.copyWith()).toList(),
       );
       isSaved.value = false;
     }
@@ -86,31 +90,9 @@ class HasilDenahController extends GetxController {
 
     Get.to(
       () => RABPage(
-        rooms: _convertMetersToLegacyPixels(currentRooms.toList()),
+        rooms: currentRooms.map((room) => room.copyWith()).toList(),
       ),
     );
-  }
-
-  List<RoomModel> _convertMetersToLegacyPixels(List<RoomModel> meterRooms) {
-    return meterRooms.map((room) {
-      return room.copyWith(
-        x: room.x * skala,
-        y: room.y * skala,
-        width: room.width * skala,
-        height: room.height * skala,
-      );
-    }).toList();
-  }
-
-  List<RoomModel> _convertLegacyPixelsToMeters(List<RoomModel> pixelRooms) {
-    return pixelRooms.map((room) {
-      return room.copyWith(
-        x: room.x / skala,
-        y: room.y / skala,
-        width: room.width / skala,
-        height: room.height / skala,
-      );
-    }).toList();
   }
 
   @override
