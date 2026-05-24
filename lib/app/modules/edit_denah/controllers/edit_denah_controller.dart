@@ -8,12 +8,29 @@ import 'package:smart_floor_plan/app/data/models/room_model.dart';
 class EditDenahController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
 
-  final listRuangan = <RoomModel>[].obs;
+  final RxList<RoomModel> listRuangan = <RoomModel>[].obs;
+  final RxInt selectedRoomIndex = (-1).obs;
 
-  double landWidth = 0;
-  double landLength = 0;
+  double landWidth = 0.0;
+  double landLength = 0.0;
 
   bool _hasInitialised = false;
+  List<RoomModel> _initialRooms = <RoomModel>[];
+
+  RoomModel? get selectedRoom {
+    final int index = selectedRoomIndex.value;
+
+    if (index < 0 || index >= listRuangan.length) {
+      return null;
+    }
+
+    return listRuangan[index];
+  }
+
+  bool get hasSelectedRoom {
+    final int index = selectedRoomIndex.value;
+    return index >= 0 && index < listRuangan.length;
+  }
 
   void initialisePlan({
     required List<RoomModel> rooms,
@@ -25,6 +42,8 @@ class EditDenahController extends GetxController {
     landWidth = inputLandWidth;
     landLength = inputLandLength;
 
+    _initialRooms = rooms.map((room) => room.copyWith()).toList();
+
     listRuangan.assignAll(
       rooms.map((room) => room.copyWith()).toList(),
     );
@@ -32,6 +51,18 @@ class EditDenahController extends GetxController {
     _hasInitialised = true;
   }
 
+  void selectRoom(int index) {
+    if (index < 0 || index >= listRuangan.length) return;
+
+    selectedRoomIndex.value = index;
+  }
+
+  void clearSelection() {
+    selectedRoomIndex.value = -1;
+  }
+
+  /// Geser langsung dari canvas.
+  /// Ruangan boleh bertabrakan, tetapi tidak boleh keluar batas lahan.
   void updatePosition({
     required int index,
     required double deltaXMeter,
@@ -39,59 +70,153 @@ class EditDenahController extends GetxController {
   }) {
     if (index < 0 || index >= listRuangan.length) return;
 
-    final room = listRuangan[index];
+    final RoomModel room = listRuangan[index];
 
-    final maxX = math.max(0.0, landWidth - room.width);
-    final maxY = math.max(0.0, landLength - room.height);
+    final double maxX = math.max(0.0, landWidth - room.width);
+    final double maxY = math.max(0.0, landLength - room.height);
 
-    final candidate = room.copyWith(
+    final RoomModel updatedRoom = room.copyWith(
       x: (room.x + deltaXMeter).clamp(0.0, maxX).toDouble(),
       y: (room.y + deltaYMeter).clamp(0.0, maxY).toDouble(),
     );
 
-    if (_canPlace(candidate, index)) {
-      listRuangan[index] = candidate;
-    }
+    listRuangan[index] = updatedRoom;
   }
 
-  void updateSize({
+  /// Geser presisi dari tombol arah pada panel kontrol.
+  /// Ruangan boleh melewati/menutupi ruang lain.
+  void moveSelectedRoom({
+    required double deltaX,
+    required double deltaY,
+  }) {
+    final int index = selectedRoomIndex.value;
+
+    if (index < 0 || index >= listRuangan.length) return;
+
+    final RoomModel room = listRuangan[index];
+
+    final double maxX = math.max(0.0, landWidth - room.width);
+    final double maxY = math.max(0.0, landLength - room.height);
+
+    final RoomModel updatedRoom = room.copyWith(
+      x: (room.x + deltaX).clamp(0.0, maxX).toDouble(),
+      y: (room.y + deltaY).clamp(0.0, maxY).toDouble(),
+    );
+
+    listRuangan[index] = updatedRoom;
+  }
+
+  /// Tambah/kurangi lebar ruangan.
+  /// Overlap diperbolehkan, tetapi ukuran tidak boleh melewati batas kanan lahan.
+  
+  ///   /// Resize langsung dengan menarik handle pada pojok kanan bawah ruang.
+  /// Ruangan boleh bertabrakan, tetapi tetap tidak boleh keluar batas lahan.
+  void resizeSelectedByDrag({
     required int index,
     required double deltaWidthMeter,
     required double deltaHeightMeter,
   }) {
     if (index < 0 || index >= listRuangan.length) return;
 
-    final room = listRuangan[index];
+    selectedRoomIndex.value = index;
 
-    final maxWidth = math.max(1.0, landWidth - room.x);
-    final maxHeight = math.max(1.0, landLength - room.y);
+    final RoomModel room = listRuangan[index];
 
-    final candidate = room.copyWith(
+    final double minimumWidth = _minimumWidth(room);
+    final double minimumHeight = _minimumHeight(room);
+
+    final double maximumWidth = math.max(
+      minimumWidth,
+      landWidth - room.x,
+    );
+
+    final double maximumHeight = math.max(
+      minimumHeight,
+      landLength - room.y,
+    );
+
+    final RoomModel updatedRoom = room.copyWith(
       width: (room.width + deltaWidthMeter)
-          .clamp(1.0, maxWidth)
+          .clamp(minimumWidth, maximumWidth)
           .toDouble(),
       height: (room.height + deltaHeightMeter)
-          .clamp(1.0, maxHeight)
+          .clamp(minimumHeight, maximumHeight)
           .toDouble(),
     );
 
-    if (_canPlace(candidate, index)) {
-      listRuangan[index] = candidate;
-    }
+    listRuangan[index] = updatedRoom;
   }
+  void adjustSelectedWidth(double delta) {
+    final int index = selectedRoomIndex.value;
 
-  void rotateRoom(int index) {
     if (index < 0 || index >= listRuangan.length) return;
 
-    final room = listRuangan[index];
+    final RoomModel room = listRuangan[index];
 
-    final rotatedWidth = room.height;
-    final rotatedHeight = room.width;
+    final double minimumWidth = _minimumWidth(room);
+    final double maximumWidth = math.max(
+      minimumWidth,
+      landWidth - room.x,
+    );
 
-    final maxX = math.max(0.0, landWidth - rotatedWidth);
-    final maxY = math.max(0.0, landLength - rotatedHeight);
+    final RoomModel updatedRoom = room.copyWith(
+      width: (room.width + delta)
+          .clamp(minimumWidth, maximumWidth)
+          .toDouble(),
+    );
 
-    final candidate = room.copyWith(
+    listRuangan[index] = updatedRoom;
+  }
+
+  /// Tambah/kurangi panjang ruangan.
+  /// Overlap diperbolehkan, tetapi ukuran tidak boleh melewati batas bawah lahan.
+  void adjustSelectedHeight(double delta) {
+    final int index = selectedRoomIndex.value;
+
+    if (index < 0 || index >= listRuangan.length) return;
+
+    final RoomModel room = listRuangan[index];
+
+    final double minimumHeight = _minimumHeight(room);
+    final double maximumHeight = math.max(
+      minimumHeight,
+      landLength - room.y,
+    );
+
+    final RoomModel updatedRoom = room.copyWith(
+      height: (room.height + delta)
+          .clamp(minimumHeight, maximumHeight)
+          .toDouble(),
+    );
+
+    listRuangan[index] = updatedRoom;
+  }
+
+  /// Putar ruang 90 derajat.
+  /// Setelah diputar, posisi otomatis digeser sedikit bila menyentuh batas lahan.
+  /// Ruang tetap boleh bertabrakan dengan ruang lain.
+  void rotateSelectedRoom() {
+    final int index = selectedRoomIndex.value;
+
+    if (index < 0 || index >= listRuangan.length) return;
+
+    final RoomModel room = listRuangan[index];
+
+    final double rotatedWidth = room.height;
+    final double rotatedHeight = room.width;
+
+    if (rotatedWidth > landWidth || rotatedHeight > landLength) {
+      _showMessage(
+        title: 'Rotasi Tidak Bisa',
+        message: 'Ukuran ruang lebih besar dari batas lahan setelah diputar.',
+      );
+      return;
+    }
+
+    final double maxX = math.max(0.0, landWidth - rotatedWidth);
+    final double maxY = math.max(0.0, landLength - rotatedHeight);
+
+    final RoomModel updatedRoom = room.copyWith(
       x: room.x.clamp(0.0, maxX).toDouble(),
       y: room.y.clamp(0.0, maxY).toDouble(),
       width: rotatedWidth,
@@ -99,60 +224,52 @@ class EditDenahController extends GetxController {
       doorSide: _rotateDoorSide(room.doorSide),
     );
 
-    if (!_canPlace(candidate, index)) {
-      Get.snackbar(
-        'Rotasi Tidak Bisa',
-        'Ruangan bertabrakan dengan ruang lain setelah diputar. Geser ruang terlebih dahulu.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: navy,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 14,
-        duration: const Duration(seconds: 2),
-      );
-      return;
-    }
+    listRuangan[index] = updatedRoom;
 
-    listRuangan[index] = candidate;
-
-    Get.snackbar(
-      'Ruangan Diputar',
-      '${room.nama} berhasil dirotasi 90°.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: navy,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 14,
+    _showMessage(
+      title: 'Rotasi Berhasil',
+      message: '${room.nama} berhasil diputar 90°.',
       duration: const Duration(seconds: 1),
     );
   }
 
-  bool _canPlace(RoomModel candidate, int currentIndex) {
-    if (candidate.x < 0 ||
-        candidate.y < 0 ||
-        candidate.x + candidate.width > landWidth ||
-        candidate.y + candidate.height > landLength) {
-      return false;
-    }
+  void resetLayout() {
+    listRuangan.assignAll(
+      _initialRooms.map((room) => room.copyWith()).toList(),
+    );
 
-    for (int i = 0; i < listRuangan.length; i++) {
-      if (i == currentIndex) continue;
+    selectedRoomIndex.value = -1;
 
-      if (_isOverlapping(candidate, listRuangan[i])) {
-        return false;
-      }
-    }
-
-    return true;
+    _showMessage(
+      title: 'Layout Direset',
+      message: 'Denah dikembalikan ke hasil generate awal.',
+    );
   }
 
-  bool _isOverlapping(RoomModel first, RoomModel second) {
-    const double safeGap = 0.06;
+  double _minimumWidth(RoomModel room) {
+    switch (room.category) {
+      case 'bath':
+        return 1.0;
+      case 'outdoor':
+        return 1.0;
+      case 'service':
+        return 1.2;
+      default:
+        return 1.5;
+    }
+  }
 
-    return first.x + safeGap < second.x + second.width &&
-        first.x + first.width - safeGap > second.x &&
-        first.y + safeGap < second.y + second.height &&
-        first.y + first.height - safeGap > second.y;
+  double _minimumHeight(RoomModel room) {
+    switch (room.category) {
+      case 'bath':
+        return 1.0;
+      case 'outdoor':
+        return 1.0;
+      case 'service':
+        return 1.2;
+      default:
+        return 1.5;
+    }
   }
 
   String _rotateDoorSide(String side) {
@@ -168,6 +285,23 @@ class EditDenahController extends GetxController {
       default:
         return 'bottom';
     }
+  }
+
+  void _showMessage({
+    required String title,
+    required String message,
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: navy,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 14,
+      duration: duration,
+    );
   }
 
   void saveResult() {

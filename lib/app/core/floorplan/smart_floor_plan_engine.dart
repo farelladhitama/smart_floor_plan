@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:smart_floor_plan/app/core/floorplan/room_recommendation.dart';
 import 'package:smart_floor_plan/app/data/models/room_model.dart';
@@ -23,75 +23,41 @@ class SmartFloorPlanEngine {
     required double landLength,
     required int bedroomCount,
   }) {
-    final area = landWidth * landLength;
+    final double area = landWidth * landLength;
+    final int bedrooms = _recommendedBedroomCount(area);
+    final int bathrooms = _recommendedBathroomCount(area);
 
-    final rooms = <RoomRecommendation>[
+    final List<RoomRecommendation> rooms = [
       const RoomRecommendation(
         name: 'Teras',
         category: 'outdoor',
-        width: 3.0,
+        width: 2.8,
         height: 1.2,
       ),
       const RoomRecommendation(
         name: 'Ruang Tamu',
         category: 'living',
-        width: 3.2,
+        width: 3.6,
         height: 3.4,
       ),
       const RoomRecommendation(
         name: 'Dapur',
         category: 'kitchen',
-        width: 2.5,
+        width: 2.8,
         height: 2.8,
-      ),
-      const RoomRecommendation(
-        name: 'Kamar Mandi',
-        category: 'bath',
-        width: 1.6,
-        height: 2.0,
-      ),
-      const RoomRecommendation(
-        name: 'K. Tidur Utama',
-        category: 'bedroom',
-        width: 3.2,
-        height: 4.0,
       ),
     ];
 
-    if (bedroomCount >= 2 || area >= 70) {
-      rooms.add(
-        const RoomRecommendation(
-          name: 'K. Tidur 1',
-          category: 'bedroom',
-          width: 3.0,
-          height: 3.2,
-        ),
-      );
-    }
-
-    if (bedroomCount >= 3 || area >= 100) {
-      rooms.add(
-        const RoomRecommendation(
-          name: 'K. Tidur 2',
-          category: 'bedroom',
-          width: 3.0,
-          height: 3.2,
-        ),
-      );
-    }
-
-    if (area >= 75) {
+    if (area >= 70) {
       rooms.add(
         const RoomRecommendation(
           name: 'Ruang Keluarga',
           category: 'family',
-          width: 3.5,
-          height: 4.0,
+          width: 3.8,
+          height: 3.6,
         ),
       );
-    }
 
-    if (area >= 85) {
       rooms.add(
         const RoomRecommendation(
           name: 'R. Makan',
@@ -102,7 +68,29 @@ class SmartFloorPlanEngine {
       );
     }
 
-    if (area >= 95) {
+    for (int i = 0; i < bedrooms; i++) {
+      rooms.add(
+        RoomRecommendation(
+          name: i == 0 ? 'K. Tidur Utama' : 'K. Tidur $i',
+          category: 'bedroom',
+          width: i == 0 ? 3.4 : 3.0,
+          height: i == 0 ? 3.8 : 3.2,
+        ),
+      );
+    }
+
+    for (int i = 0; i < bathrooms; i++) {
+      rooms.add(
+        RoomRecommendation(
+          name: i == 0 ? 'Kamar Mandi' : 'KM/WC 2',
+          category: 'bath',
+          width: 1.7,
+          height: 2.0,
+        ),
+      );
+    }
+
+    if (area >= 100) {
       rooms.add(
         const RoomRecommendation(
           name: 'Carport',
@@ -113,23 +101,23 @@ class SmartFloorPlanEngine {
       );
     }
 
-    if (area >= 100) {
+    if (area >= 120) {
       rooms.add(
         const RoomRecommendation(
           name: 'Taman',
           category: 'outdoor',
-          width: 2.5,
-          height: 3.5,
+          width: 2.8,
+          height: 3.0,
         ),
       );
     }
 
-    if (area >= 115) {
+    if (area >= 150) {
       rooms.add(
         const RoomRecommendation(
-          name: 'Jemuran',
+          name: 'Area Cuci / Jemuran',
           category: 'service',
-          width: 3.0,
+          width: 2.6,
           height: 2.0,
         ),
       );
@@ -144,332 +132,491 @@ class SmartFloorPlanEngine {
     required int bedroomCount,
     List<RoomRecommendation> extraRooms = const [],
   }) {
-    final safeLandWidth = max(5.0, landWidth);
-    final safeLandLength = max(7.0, landLength);
+    final double safeWidth = math.max(5.0, landWidth);
+    final double safeLength = math.max(7.0, landLength);
+    final double area = safeWidth * safeLength;
 
-    final recommendations = getRecommendations(
-      landWidth: safeLandWidth,
-      landLength: safeLandLength,
-      bedroomCount: bedroomCount,
+    final List<RoomModel> generatedRooms;
+
+    if (area >= 120 && safeWidth >= 9 && safeLength >= 10) {
+      generatedRooms = _generateFamilyLayout(
+        landWidth: safeWidth,
+        landLength: safeLength,
+        includeSecondBathroom: area >= 120,
+        includeGarden: area >= 120,
+        includeServiceArea: area >= 150,
+      );
+    } else if (area >= 70 && safeWidth >= 7) {
+      generatedRooms = _generateMediumLayout(
+        landWidth: safeWidth,
+        landLength: safeLength,
+      );
+    } else {
+      generatedRooms = _generateCompactLayout(
+        landWidth: safeWidth,
+        landLength: safeLength,
+      );
+    }
+
+    return SmartFloorPlanResult(
+      landWidth: safeWidth,
+      landLength: safeLength,
+      rooms: generatedRooms,
+      recommendations: getRecommendations(
+        landWidth: safeWidth,
+        landLength: safeLength,
+        bedroomCount: _recommendedBedroomCount(area),
+      ),
     );
+  }
 
-    final rooms = <RoomModel>[];
+  /// Layout untuk lahan keluarga sedang-besar.
+  ///
+  /// Arah denah:
+  /// - y kecil   = belakang rumah
+  /// - y besar   = depan rumah
+  ///
+  /// Konsep:
+  /// - Dapur dan ruang makan di belakang.
+  /// - Ruang keluarga menjadi pusat sirkulasi.
+  /// - Ruang tamu dekat teras/pintu masuk.
+  /// - Kamar berada di sisi area keluarga.
+  /// - Carport dan taman berada di luar massa indoor.
+  static List<RoomModel> _generateFamilyLayout({
+    required double landWidth,
+    required double landLength,
+    required bool includeSecondBathroom,
+    required bool includeGarden,
+    required bool includeServiceArea,
+  }) {
+    const double margin = 0.35;
 
-    void addSmart(RoomModel room) {
-      final safeRoom = _clampToLand(
-        room,
-        safeLandWidth,
-        safeLandLength,
-      );
+    final double insideWidth = landWidth - (margin * 2);
+    final double insideLength = landLength - (margin * 2);
 
-      if (!_hasCollision(safeRoom, rooms)) {
-        rooms.add(safeRoom);
-        return;
-      }
+    final double sideOutdoorWidth =
+        (insideWidth * 0.27).clamp(2.55, 3.35).toDouble();
 
-      final freeRoom = _findFreePosition(
-        room: safeRoom,
-        placedRooms: rooms,
-        landWidth: safeLandWidth,
-        landLength: safeLandLength,
-      );
+    final double mainX = margin + sideOutdoorWidth;
+    final double mainWidth = insideWidth - sideOutdoorWidth;
 
-      if (freeRoom != null) {
-        rooms.add(freeRoom);
-      }
-    }
+    final double rearDepth =
+        (insideLength * 0.23).clamp(2.75, 3.35).toDouble();
 
-    final totalArea = safeLandWidth * safeLandLength;
-    final isMediumLand = totalArea >= 70;
-    final isLargeLand = totalArea >= 100;
+    final double middleDepth =
+        (insideLength * 0.28).clamp(3.30, 4.10).toDouble();
 
-    if (isLargeLand) {
-      addSmart(
-        RoomModel(
-          nama: 'Carport',
-          x: 0.3,
-          y: 0.3,
-          width: min(3.2, safeLandWidth * 0.30),
-          height: min(4.5, safeLandLength * 0.28),
-          category: 'outdoor',
-          doorSide: 'right',
-          isOutdoor: true,
-        ),
-      );
+    const double terraceDepth = 1.15;
 
-      addSmart(
-        RoomModel(
-          nama: 'Taman',
-          x: 0.3,
-          y: 5.1,
-          width: min(3.2, safeLandWidth * 0.30),
-          height: min(3.6, safeLandLength * 0.22),
-          category: 'outdoor',
-          doorSide: 'right',
-          isOutdoor: true,
-        ),
-      );
-    }
+    final double rearY = margin;
+    final double middleY = rearY + rearDepth;
+    final double frontY = middleY + middleDepth;
+    final double terraceY = landLength - margin - terraceDepth;
 
-    addSmart(
-      RoomModel(
-        nama: 'Teras',
-        x: max(0.4, (safeLandWidth / 2) - 1.8),
-        y: safeLandLength - 1.45,
-        width: min(3.6, safeLandWidth * 0.42),
-        height: 1.15,
-        category: 'outdoor',
-        doorSide: 'top',
-        isOutdoor: true,
+    final double frontDepth = terraceY - frontY;
+
+    final double familyWidth = mainWidth * 0.54;
+    final double rightBedroomWidth = mainWidth - familyWidth;
+
+    final double diningWidth = mainWidth * 0.29;
+    final double masterWidth = mainWidth * 0.45;
+    final double bathroomWidth = mainWidth - diningWidth - masterWidth;
+
+    final List<RoomModel> rooms = [];
+
+    // ===== AREA BELAKANG =====
+    rooms.add(
+      _room(
+        name: 'Dapur',
+        x: margin,
+        y: rearY,
+        width: sideOutdoorWidth,
+        height: rearDepth,
+        category: 'kitchen',
+        doorSide: 'right',
       ),
     );
 
-    addSmart(
-      RoomModel(
-        nama: 'Ruang Tamu',
-        x: max(0.5, (safeLandWidth / 2) - 1.8),
-        y: safeLandLength - 5.2,
-        width: min(3.8, safeLandWidth * 0.40),
-        height: min(3.5, safeLandLength * 0.24),
-        category: 'living',
+    rooms.add(
+      _room(
+        name: 'R. Makan',
+        x: mainX,
+        y: rearY,
+        width: diningWidth,
+        height: rearDepth,
+        category: 'dining',
         doorSide: 'bottom',
       ),
     );
 
-    addSmart(
-      RoomModel(
-        nama: 'K. Tidur Utama',
-        x: 0.35,
-        y: safeLandLength - 6.4,
-        width: min(3.4, safeLandWidth * 0.36),
-        height: min(4.4, safeLandLength * 0.28),
+    rooms.add(
+      _room(
+        name: 'K. Tidur Utama',
+        x: mainX + diningWidth,
+        y: rearY,
+        width: masterWidth,
+        height: rearDepth,
         category: 'bedroom',
-        doorSide: 'right',
+        doorSide: 'bottom',
       ),
     );
 
-    if (bedroomCount >= 2) {
-      addSmart(
-        RoomModel(
-          nama: 'K. Tidur 1',
-          x: safeLandWidth - min(3.2, safeLandWidth * 0.34) - 0.35,
-          y: safeLandLength - 5.4,
-          width: min(3.2, safeLandWidth * 0.34),
-          height: min(3.6, safeLandLength * 0.23),
-          category: 'bedroom',
+    if (includeSecondBathroom) {
+      rooms.add(
+        _room(
+          name: 'KM Utama',
+          x: mainX + diningWidth + masterWidth,
+          y: rearY,
+          width: bathroomWidth,
+          height: rearDepth / 2,
+          category: 'bath',
           doorSide: 'left',
         ),
       );
-    }
 
-    if (isMediumLand) {
-      addSmart(
-        RoomModel(
-          nama: 'R. Keluarga',
-          x: max(0.5, (safeLandWidth / 2) - 1.9),
-          y: max(4.7, safeLandLength - 9.6),
-          width: min(3.8, safeLandWidth * 0.42),
-          height: min(3.8, safeLandLength * 0.25),
-          category: 'family',
-          doorSide: 'bottom',
-        ),
-      );
-    }
-
-    if (bedroomCount >= 3) {
-      addSmart(
-        RoomModel(
-          nama: 'K. Tidur 2',
-          x: safeLandWidth - min(3.2, safeLandWidth * 0.34) - 0.35,
-          y: max(4.5, safeLandLength - 9.4),
-          width: min(3.2, safeLandWidth * 0.34),
-          height: min(3.6, safeLandLength * 0.23),
-          category: 'bedroom',
+      rooms.add(
+        _room(
+          name: 'KM/WC',
+          x: mainX + diningWidth + masterWidth,
+          y: rearY + (rearDepth / 2),
+          width: bathroomWidth,
+          height: rearDepth / 2,
+          category: 'bath',
           doorSide: 'left',
         ),
       );
-    }
-
-    addSmart(
-      RoomModel(
-        nama: 'Kamar Mandi',
-        x: max(0.5, (safeLandWidth / 2) - 3.0),
-        y: max(4.0, safeLandLength - 8.0),
-        width: 1.7,
-        height: 2.0,
-        category: 'bath',
-        doorSide: 'right',
-      ),
-    );
-
-    if (isLargeLand) {
-      addSmart(
-        RoomModel(
-          nama: 'Kamar Mandi',
-          x: safeLandWidth - 2.3,
-          y: max(6.8, safeLandLength - 8.0),
-          width: 1.8,
-          height: 2.0,
+    } else {
+      rooms.add(
+        _room(
+          name: 'Kamar Mandi',
+          x: mainX + diningWidth + masterWidth,
+          y: rearY,
+          width: bathroomWidth,
+          height: rearDepth,
           category: 'bath',
           doorSide: 'left',
         ),
       );
     }
 
-    addSmart(
-      RoomModel(
-        nama: 'Dapur',
-        x: max(0.5, (safeLandWidth / 2) - 1.6),
-        y: 1.2,
-        width: min(2.8, safeLandWidth * 0.32),
-        height: min(3.0, safeLandLength * 0.22),
-        category: 'kitchen',
-        doorSide: 'left',
-      ),
-    );
+    // ===== AREA TENGAH =====
+    final double sideUpperHeight = includeServiceArea
+        ? middleDepth * 0.44
+        : middleDepth * 0.36;
 
-    if (isMediumLand) {
-      addSmart(
-        RoomModel(
-          nama: 'R. Makan',
-          x: safeLandWidth - min(3.6, safeLandWidth * 0.38) - 0.35,
-          y: 2.4,
-          width: min(3.6, safeLandWidth * 0.38),
-          height: min(3.0, safeLandLength * 0.22),
-          category: 'dining',
-          doorSide: 'left',
-        ),
-      );
-    }
-
-    if (totalArea >= 115) {
-      addSmart(
-        RoomModel(
-          nama: 'Jemuran',
-          x: safeLandWidth - min(4.0, safeLandWidth * 0.42) - 0.35,
-          y: 0.35,
-          width: min(4.0, safeLandWidth * 0.42),
-          height: min(1.8, safeLandLength * 0.12),
+    if (includeServiceArea) {
+      rooms.add(
+        _room(
+          name: 'Area Cuci',
+          x: margin,
+          y: middleY,
+          width: sideOutdoorWidth,
+          height: sideUpperHeight,
           category: 'service',
-          doorSide: 'left',
+          doorSide: 'right',
           isOutdoor: true,
         ),
       );
     }
 
-    for (final extra in extraRooms.where((item) => item.selected)) {
-      final alreadyExists = rooms.any(
-        (room) => room.nama.toLowerCase() == extra.name.toLowerCase(),
-      );
-
-      if (alreadyExists) continue;
-
-      addSmart(
-        RoomModel(
-          nama: extra.name,
-          x: 0.5,
-          y: 0.5,
-          width: extra.width,
-          height: extra.height,
-          category: extra.category,
-          doorSide: 'bottom',
-          isOutdoor: extra.category == 'outdoor',
+    if (includeGarden) {
+      rooms.add(
+        _room(
+          name: 'Taman',
+          x: margin,
+          y: middleY + (includeServiceArea ? sideUpperHeight : 0),
+          width: sideOutdoorWidth,
+          height: includeServiceArea
+              ? middleDepth - sideUpperHeight
+              : middleDepth,
+          category: 'outdoor',
+          doorSide: 'right',
+          isOutdoor: true,
         ),
       );
     }
 
-    return SmartFloorPlanResult(
-      landWidth: safeLandWidth,
-      landLength: safeLandLength,
-      rooms: rooms,
-      recommendations: recommendations,
+    rooms.add(
+      _room(
+        name: 'R. Keluarga',
+        x: mainX,
+        y: middleY,
+        width: familyWidth,
+        height: middleDepth,
+        category: 'family',
+        doorSide: 'bottom',
+      ),
     );
-  }
 
-  static RoomModel _clampToLand(
-    RoomModel room,
-    double landWidth,
-    double landLength,
-  ) {
-    final newWidth = min(room.width, landWidth - 0.6);
-    final newHeight = min(room.height, landLength - 0.6);
-
-    final newX = room.x
-        .clamp(0.3, landWidth - newWidth - 0.3)
-        .toDouble();
-
-    final newY = room.y
-        .clamp(0.3, landLength - newHeight - 0.3)
-        .toDouble();
-
-    return room.copyWith(
-      x: newX,
-      y: newY,
-      width: newWidth,
-      height: newHeight,
+    rooms.add(
+      _room(
+        name: 'K. Tidur 2',
+        x: mainX + familyWidth,
+        y: middleY,
+        width: rightBedroomWidth,
+        height: middleDepth,
+        category: 'bedroom',
+        doorSide: 'left',
+      ),
     );
+
+    // ===== AREA DEPAN =====
+    rooms.add(
+      _room(
+        name: 'Carport',
+        x: margin,
+        y: frontY,
+        width: sideOutdoorWidth,
+        height: frontDepth + terraceDepth,
+        category: 'outdoor',
+        doorSide: 'right',
+        isOutdoor: true,
+      ),
+    );
+
+    rooms.add(
+      _room(
+        name: 'Ruang Tamu',
+        x: mainX,
+        y: frontY,
+        width: familyWidth,
+        height: frontDepth,
+        category: 'living',
+        doorSide: 'bottom',
+      ),
+    );
+
+    rooms.add(
+      _room(
+        name: 'K. Tidur 1',
+        x: mainX + familyWidth,
+        y: frontY,
+        width: rightBedroomWidth,
+        height: frontDepth,
+        category: 'bedroom',
+        doorSide: 'left',
+      ),
+    );
+
+    rooms.add(
+      _room(
+        name: 'Teras',
+        x: mainX,
+        y: terraceY,
+        width: familyWidth,
+        height: terraceDepth,
+        category: 'outdoor',
+        doorSide: 'top',
+        isOutdoor: true,
+      ),
+    );
+
+    return rooms;
   }
 
-  static bool _hasCollision(
-    RoomModel room,
-    List<RoomModel> placedRooms,
-  ) {
-    for (final other in placedRooms) {
-      if (_intersects(room, other)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  static bool _intersects(RoomModel a, RoomModel b) {
-    const gap = 0.12;
-
-    final aLeft = a.x - gap;
-    final aRight = a.x + a.width + gap;
-    final aTop = a.y - gap;
-    final aBottom = a.y + a.height + gap;
-
-    final bLeft = b.x;
-    final bRight = b.x + b.width;
-    final bTop = b.y;
-    final bBottom = b.y + b.height;
-
-    return aLeft < bRight &&
-        aRight > bLeft &&
-        aTop < bBottom &&
-        aBottom > bTop;
-  }
-
-  static RoomModel? _findFreePosition({
-    required RoomModel room,
-    required List<RoomModel> placedRooms,
+  /// Layout lahan sedang: 2 kamar, satu kamar mandi, dan ruang inti.
+  static List<RoomModel> _generateMediumLayout({
     required double landWidth,
     required double landLength,
   }) {
-    final scaleOptions = [1.0, 0.92, 0.85, 0.78];
+    const double margin = 0.35;
+    const double terraceDepth = 1.0;
 
-    for (final scaleFactor in scaleOptions) {
-      final newWidth = max(1.3, room.width * scaleFactor);
-      final newHeight = max(1.3, room.height * scaleFactor);
+    final double width = landWidth - (margin * 2);
+    final double usableLength = landLength - (margin * 2) - terraceDepth;
 
-      for (double y = 0.3; y <= landLength - newHeight - 0.3; y += 0.35) {
-        for (double x = 0.3; x <= landWidth - newWidth - 0.3; x += 0.35) {
-          final candidate = room.copyWith(
-            x: x,
-            y: y,
-            width: newWidth,
-            height: newHeight,
-          );
+    final double rearDepth = usableLength * 0.30;
+    final double middleDepth = usableLength * 0.33;
+    final double frontDepth = usableLength - rearDepth - middleDepth;
 
-          if (!_hasCollision(candidate, placedRooms)) {
-            return candidate;
-          }
-        }
-      }
+    final double leftWidth = width * 0.48;
+    final double rightWidth = width - leftWidth;
+
+    final double yRear = margin;
+    final double yMiddle = yRear + rearDepth;
+    final double yFront = yMiddle + middleDepth;
+    final double yTerrace = yFront + frontDepth;
+
+    return [
+      _room(
+        name: 'Dapur',
+        x: margin,
+        y: yRear,
+        width: leftWidth,
+        height: rearDepth,
+        category: 'kitchen',
+        doorSide: 'right',
+      ),
+      _room(
+        name: 'Kamar Mandi',
+        x: margin + leftWidth,
+        y: yRear,
+        width: rightWidth * 0.44,
+        height: rearDepth,
+        category: 'bath',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'K. Tidur Utama',
+        x: margin + leftWidth + (rightWidth * 0.44),
+        y: yRear,
+        width: rightWidth * 0.56,
+        height: rearDepth,
+        category: 'bedroom',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'R. Keluarga',
+        x: margin,
+        y: yMiddle,
+        width: leftWidth,
+        height: middleDepth,
+        category: 'family',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'K. Tidur 1',
+        x: margin + leftWidth,
+        y: yMiddle,
+        width: rightWidth,
+        height: middleDepth,
+        category: 'bedroom',
+        doorSide: 'left',
+      ),
+      _room(
+        name: 'Ruang Tamu',
+        x: margin,
+        y: yFront,
+        width: width,
+        height: frontDepth,
+        category: 'living',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'Teras',
+        x: margin + (width * 0.24),
+        y: yTerrace,
+        width: width * 0.52,
+        height: terraceDepth,
+        category: 'outdoor',
+        doorSide: 'top',
+        isOutdoor: true,
+      ),
+    ];
+  }
+
+  /// Layout lahan kecil: fungsi inti saja supaya tidak dipaksakan penuh.
+  static List<RoomModel> _generateCompactLayout({
+    required double landWidth,
+    required double landLength,
+  }) {
+    const double margin = 0.30;
+    const double terraceDepth = 0.90;
+
+    final double width = landWidth - (margin * 2);
+    final double indoorLength = landLength - (margin * 2) - terraceDepth;
+
+    final double rearDepth = indoorLength * 0.32;
+    final double bedroomDepth = indoorLength * 0.34;
+    final double livingDepth = indoorLength - rearDepth - bedroomDepth;
+
+    final double kitchenWidth = width * 0.60;
+    final double bathWidth = width - kitchenWidth;
+
+    final double yRear = margin;
+    final double yBedroom = yRear + rearDepth;
+    final double yLiving = yBedroom + bedroomDepth;
+    final double yTerrace = yLiving + livingDepth;
+
+    return [
+      _room(
+        name: 'Dapur',
+        x: margin,
+        y: yRear,
+        width: kitchenWidth,
+        height: rearDepth,
+        category: 'kitchen',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'Kamar Mandi',
+        x: margin + kitchenWidth,
+        y: yRear,
+        width: bathWidth,
+        height: rearDepth,
+        category: 'bath',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'K. Tidur',
+        x: margin,
+        y: yBedroom,
+        width: width,
+        height: bedroomDepth,
+        category: 'bedroom',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'Ruang Tamu',
+        x: margin,
+        y: yLiving,
+        width: width,
+        height: livingDepth,
+        category: 'living',
+        doorSide: 'bottom',
+      ),
+      _room(
+        name: 'Teras',
+        x: margin + (width * 0.22),
+        y: yTerrace,
+        width: width * 0.56,
+        height: terraceDepth,
+        category: 'outdoor',
+        doorSide: 'top',
+        isOutdoor: true,
+      ),
+    ];
+  }
+
+  static RoomModel _room({
+    required String name,
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+    required String category,
+    required String doorSide,
+    bool isOutdoor = false,
+  }) {
+    return RoomModel(
+      nama: name,
+      x: x,
+      y: y,
+      width: math.max(width, 0.75),
+      height: math.max(height, 0.75),
+      category: category,
+      doorSide: doorSide,
+      isOutdoor: isOutdoor,
+    );
+  }
+
+  static int _recommendedBedroomCount(double area) {
+    if (area >= 120) {
+      return 3;
     }
 
-    return null;
+    if (area >= 70) {
+      return 2;
+    }
+
+    return 1;
+  }
+
+  static int _recommendedBathroomCount(double area) {
+    if (area >= 120) {
+      return 2;
+    }
+
+    return 1;
   }
 }
