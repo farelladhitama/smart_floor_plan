@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart';
+import 'package:smart_floor_plan/app/widgets/professional_floor_plan_painter.dart';
 
 class HasilDenahPage extends GetView<HasilDenahController> {
   final List<RoomModel> rooms;
@@ -20,6 +21,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   static const Color navyLight = Color(0xFF1B263B);
   static const Color orange = Color(0xFFE47B3E);
   static const Color background = Color(0xFFF5F7FA);
+  static const Color borderColor = Color(0xFFE2E8F0);
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
         title: const Text(
           'Hasil Denah',
           style: TextStyle(
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
             fontSize: 20,
           ),
@@ -39,46 +41,58 @@ class HasilDenahPage extends GetView<HasilDenahController> {
         centerTitle: true,
         backgroundColor: navy,
         elevation: 0,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final bool isMobile = constraints.maxWidth < 700;
+            final bool isMobile = constraints.maxWidth < 760;
 
             return Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 900,
-                ),
+                constraints: const BoxConstraints(maxWidth: 1080),
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     isMobile ? 16 : 24,
                     20,
                     isMobile ? 16 : 24,
-                    120,
+                    112,
                   ),
                   child: isMobile
                       ? Column(
                           children: [
                             _buildHeaderCard(),
                             const SizedBox(height: 18),
-                            _buildCanvasCard(),
+                            _buildCanvasCard(isMobile: true),
+                            const SizedBox(height: 18),
+                            _buildLegendCard(),
+                            const SizedBox(height: 18),
+                            _buildRoomSummaryCard(),
                           ],
                         )
                       : Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
-                              width: 300,
-                              child: _buildHeaderCard(),
+                              width: 310,
+                              child: Column(
+                                children: [
+                                  _buildHeaderCard(),
+                                  const SizedBox(height: 18),
+                                  _buildLegendCard(),
+                                ],
+                              ),
                             ),
                             const SizedBox(width: 20),
                             Expanded(
-                              child: _buildCanvasCard(),
+                              child: Column(
+                                children: [
+                                  _buildCanvasCard(isMobile: false),
+                                  const SizedBox(height: 18),
+                                  _buildRoomSummaryCard(),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -98,47 +112,55 @@ class HasilDenahPage extends GetView<HasilDenahController> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            navy,
-            navyLight,
-          ],
+          colors: [navy, navyLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: navy.withValues(alpha: 0.16),
+            blurRadius: 22,
+            offset: const Offset(0, 11),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeaderIcon(),
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.architecture_rounded,
+              color: orange,
+              size: 33,
+            ),
+          ),
           const SizedBox(height: 18),
           const Text(
             'Denah Rumah 2D',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Hasil generate denah berdasarkan ukuran lahan dan kebutuhan ruangan Anda.',
+            'Layout otomatis dengan pembagian ruang natural, dinding blueprint, dan akses pintu antarruang.',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.72),
-              fontSize: 13.5,
-              height: 1.5,
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 13,
+              height: 1.48,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
@@ -148,95 +170,67 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                   icon: Icons.straighten_rounded,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: _buildInfoTile(
                   title: 'Panjang',
                   value: '${inputPanjangRumah.toStringAsFixed(1)} m',
-                  icon: Icons.square_foot_rounded,
+                  icon: Icons.height_rounded,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Obx(
-            () => _buildInfoTile(
-              title: 'Jumlah Ruang',
-              value: '${controller.currentRooms.length} ruang',
-              icon: Icons.meeting_room_rounded,
-              fullWidth: true,
+            () => Row(
+              children: [
+                Expanded(
+                  child: _buildInfoTile(
+                    title: 'Ruangan',
+                    value: '${controller.currentRooms.length}',
+                    icon: Icons.meeting_room_rounded,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildInfoTile(
+                    title: 'Area Ruang',
+                    value: '${controller.totalRoomArea.toStringAsFixed(1)} m²',
+                    icon: Icons.square_foot_rounded,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 18),
-          _buildHintBox(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderIcon() {
-    return Container(
-      width: 62,
-      height: 62,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: const Icon(
-        Icons.map_rounded,
-        color: orange,
-        size: 36,
-      ),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required String title,
-    required String value,
-    required IconData icon,
-    bool fullWidth = false,
-  }) {
-    return Container(
-      width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.09),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.10),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: orange,
-            size: 22,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: orange.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: orange.withValues(alpha: 0.18),
+              ),
+            ),
+            child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Icon(
+                  Icons.tips_and_updates_rounded,
+                  color: orange,
+                  size: 21,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
+                SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    'Zoom denah untuk melihat detail pintu, ukuran ruang, dan jalur akses.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      height: 1.42,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -247,35 +241,48 @@ class HasilDenahPage extends GetView<HasilDenahController> {
     );
   }
 
-  Widget _buildHintBox() {
+  Widget _buildInfoTile({
+    required String title,
+    required String value,
+    required IconData icon,
+  }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
       decoration: BoxDecoration(
-        color: orange.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: orange.withOpacity(0.20),
+          color: Colors.white.withValues(alpha: 0.09),
         ),
       ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Icon(
-            Icons.tips_and_updates_rounded,
-            color: orange,
-            size: 22,
-          ),
-          SizedBox(width: 10),
+          Icon(icon, color: orange, size: 19),
+          const SizedBox(width: 7),
           Expanded(
-            child: Text(
-              'Tekan Edit untuk menggeser atau mengubah ukuran ruangan. Setelah selesai, simpan denah untuk melihat RAB.',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.5,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.66),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -283,24 +290,19 @@ class HasilDenahPage extends GetView<HasilDenahController> {
     );
   }
 
-  Widget _buildCanvasCard() {
-    final double lebarVisual = inputLebarRumah * controller.skala;
-    final double panjangVisual = inputPanjangRumah * controller.skala;
-
+  Widget _buildCanvasCard({required bool isMobile}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(isMobile ? 14 : 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.06),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: navy.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 9),
           ),
         ],
       ),
@@ -309,69 +311,70 @@ class HasilDenahPage extends GetView<HasilDenahController> {
           Row(
             children: [
               const Expanded(
-                child: Text(
-                  'Preview Denah',
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Preview Arsitektural',
+                      style: TextStyle(
+                        color: navy,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Denah blueprint dengan pintu dan ukuran ruang',
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 6,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: orange.withOpacity(0.12),
+                  color: orange.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
-                  'Blueprint',
+                  'SMART PLAN',
                   style: TextStyle(
                     color: orange,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(
-                minHeight: 360,
-                maxHeight: 520,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF3F6),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                ),
-              ),
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 2.5,
-                boundaryMargin: const EdgeInsets.all(80),
-                child: Center(
-                  child: Container(
-                    width: lebarVisual + 90,
-                    height: panjangVisual + 90,
-                    alignment: Alignment.center,
-                    child: Obx(
-                      () => CustomPaint(
-                        size: Size(lebarVisual, panjangVisual),
-                        painter: DenahProfessionalPainter(
-                          rooms: controller.currentRooms.toList(),
-                          skala: controller.skala,
-                          lebarRumah: inputLebarRumah,
-                          panjangRumah: inputPanjangRumah,
-                        ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: isMobile ? 560 : 680,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F7FA),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: borderColor),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Obx(
+                () => InteractiveViewer(
+                  minScale: 0.75,
+                  maxScale: 4.5,
+                  boundaryMargin: const EdgeInsets.all(80),
+                  child: SizedBox.expand(
+                    child: CustomPaint(
+                      painter: ProfessionalFloorPlanPainter(
+                        landWidth: inputLebarRumah,
+                        landLength: inputPanjangRumah,
+                        rooms: controller.currentRooms.toList(),
                       ),
                     ),
                   ),
@@ -379,33 +382,191 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.pinch_rounded,
+                color: Color(0xFF64748B),
+                size: 17,
+              ),
+              SizedBox(width: 6),
+              Text(
+                'Cubit atau scroll untuk zoom • geser untuk melihat detail',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildLegendCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: borderColor),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Legenda Ruang',
+            style: TextStyle(
+              color: navy,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 13),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _LegendItem(color: Color(0xFFFFF3DD), label: 'Kamar'),
+              _LegendItem(color: Color(0xFFFFF9EC), label: 'R. Tamu'),
+              _LegendItem(color: Color(0xFFF7F1E7), label: 'R. Keluarga'),
+              _LegendItem(color: Color(0xFFEAF4FD), label: 'Dapur'),
+              _LegendItem(color: Color(0xFFE0F2FE), label: 'KM/WC'),
+              _LegendItem(color: Color(0xFFD8F3DC), label: 'Taman'),
+              _LegendItem(color: Color(0xFFE5E7EB), label: 'Carport'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoomSummaryCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Rincian Ruangan',
+            style: TextStyle(
+              color: navy,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Obx(
+            () => Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: controller.currentRooms.map((room) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: _roomDotColor(room),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        room.nama,
+                        style: const TextStyle(
+                          color: navy,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${room.area.toStringAsFixed(1)} m²',
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _roomDotColor(RoomModel room) {
+    switch (room.category) {
+      case 'bedroom':
+        return const Color(0xFFF59E0B);
+      case 'living':
+        return const Color(0xFFEA580C);
+      case 'family':
+        return const Color(0xFFD97706);
+      case 'kitchen':
+        return const Color(0xFF2563EB);
+      case 'dining':
+        return const Color(0xFFFB923C);
+      case 'bath':
+        return const Color(0xFF0EA5E9);
+      case 'outdoor':
+        return const Color(0xFF16A34A);
+      default:
+        return const Color(0xFF64748B);
+    }
   }
 
   Widget _buildBottomAction() {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
         decoration: BoxDecoration(
-          color: background,
+          color: Colors.white,
+          border: const Border(
+            top: BorderSide(color: borderColor),
+          ),
           boxShadow: [
             BoxShadow(
-              color: navy.withOpacity(0.08),
-              blurRadius: 18,
-              offset: const Offset(0, -5),
+              color: navy.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
         child: Row(
           children: [
             Expanded(
-              flex: 1,
               child: _bottomButton(
                 label: 'EDIT',
-                icon: Icons.edit_location_alt_rounded,
+                icon: Icons.design_services_rounded,
                 color: navy,
                 onTap: controller.editDenah,
               ),
@@ -414,19 +575,20 @@ class HasilDenahPage extends GetView<HasilDenahController> {
             Expanded(
               flex: 2,
               child: Obx(
-                () => !controller.isSaved.value
-                    ? _bottomButton(
-                        label: 'SIMPAN DENAH',
-                        icon: Icons.save_rounded,
-                        color: orange,
-                        onTap: controller.simpanDenah,
-                      )
-                    : _bottomButton(
-                        label: 'LIHAT RAB',
-                        icon: Icons.receipt_long_rounded,
-                        color: Colors.green.shade700,
-                        onTap: controller.lihatRAB,
-                      ),
+                () => _bottomButton(
+                  label: controller.isSaved.value
+                      ? 'LIHAT RAB'
+                      : 'SIMPAN DENAH',
+                  icon: controller.isSaved.value
+                      ? Icons.receipt_long_rounded
+                      : Icons.save_rounded,
+                  color: controller.isSaved.value
+                      ? const Color(0xFF15803D)
+                      : orange,
+                  onTap: controller.isSaved.value
+                      ? controller.lihatRAB
+                      : controller.simpanDenah,
+                ),
               ),
             ),
           ],
@@ -442,30 +604,24 @@ class HasilDenahPage extends GetView<HasilDenahController> {
     required VoidCallback onTap,
   }) {
     return SizedBox(
-      height: 56,
+      height: 55,
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(
-          icon,
-          color: Colors.white,
-          size: 21,
-        ),
+        icon: Icon(icon, size: 20),
         label: Text(
           label,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13.5,
-            fontWeight: FontWeight.w900,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
           ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
-          elevation: 5,
-          shadowColor: color.withOpacity(0.26),
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(17),
           ),
         ),
       ),
@@ -473,218 +629,49 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   }
 }
 
-class DenahProfessionalPainter extends CustomPainter {
-  final List<RoomModel> rooms;
-  final double skala;
-  final double lebarRumah;
-  final double panjangRumah;
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
 
-  DenahProfessionalPainter({
-    required this.rooms,
-    required this.skala,
-    required this.lebarRumah,
-    required this.panjangRumah,
+  const _LegendItem({
+    required this.color,
+    required this.label,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final backgroundPaint = Paint()
-      ..color = const Color(0xFFEFF3F6)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      backgroundPaint,
-    );
-
-    final gridPaint = Paint()
-      ..color = Colors.blueGrey.withOpacity(0.16)
-      ..strokeWidth = 0.6;
-
-    final largeGridPaint = Paint()
-      ..color = Colors.blueGrey.withOpacity(0.25)
-      ..strokeWidth = 1.0;
-
-    for (double i = -40; i <= size.width + 40; i += 10) {
-      canvas.drawLine(
-        Offset(i, -40),
-        Offset(i, size.height + 40),
-        i % 50 == 0 ? largeGridPaint : gridPaint,
-      );
-    }
-
-    for (double i = -40; i <= size.height + 40; i += 10) {
-      canvas.drawLine(
-        Offset(-40, i),
-        Offset(size.width + 40, i),
-        i % 50 == 0 ? largeGridPaint : gridPaint,
-      );
-    }
-
-    final outerWallPaint = Paint()
-      ..color = const Color(0xFF0D1B2A)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      outerWallPaint,
-    );
-
-    _drawDimension(
-      canvas,
-      const Offset(0, -25),
-      Offset(size.width, -25),
-      '${lebarRumah.toStringAsFixed(1)}m',
-      Colors.blueGrey.shade800,
-    );
-
-    _drawDimension(
-      canvas,
-      const Offset(-25, 0),
-      Offset(-25, size.height),
-      '${panjangRumah.toStringAsFixed(1)}m',
-      Colors.blueGrey.shade800,
-      isVertical: true,
-    );
-
-    for (final room in rooms) {
-      final roomRect = Rect.fromLTWH(
-        room.x,
-        room.y,
-        room.width,
-        room.height,
-      );
-
-      final roomPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(roomRect, const Radius.circular(4)),
-        roomPaint,
-      );
-
-      final wallPaint = Paint()
-        ..color = const Color(0xFF0D1B2A).withOpacity(0.86)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(roomRect, const Radius.circular(4)),
-        wallPaint,
-      );
-
-      final double luas = (room.width / skala) * (room.height / skala);
-
-      _drawRoomInfo(
-        canvas,
-        roomRect,
-        room.nama,
-        luas,
-      );
-
-      _drawDimension(
-        canvas,
-        Offset(room.x, room.y + 13),
-        Offset(room.x + room.width, room.y + 13),
-        '${(room.width / skala).toStringAsFixed(1)}m',
-        Colors.red.shade800,
-        fontSize: 9,
-      );
-
-      _drawDimension(
-        canvas,
-        Offset(room.x + 13, room.y),
-        Offset(room.x + 13, room.y + room.height),
-        '${(room.height / skala).toStringAsFixed(1)}m',
-        Colors.red.shade800,
-        isVertical: true,
-        fontSize: 9,
-      );
-    }
-  }
-
-  void _drawDimension(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    String text,
-    Color color, {
-    bool isVertical = false,
-    double fontSize = 11,
-  }) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.0;
-
-    canvas.drawLine(start, end, paint);
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w900,
-        ),
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: HasilDenahPage.borderColor),
       ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    final Offset textPos = isVertical
-        ? Offset(
-            start.dx - textPainter.width - 5,
-            (start.dy + end.dy) / 2 - (textPainter.height / 2),
-          )
-        : Offset(
-            (start.dx + end.dx) / 2 - (textPainter.width / 2),
-            start.dy - textPainter.height - 2,
-          );
-
-    textPainter.paint(canvas, textPos);
-  }
-
-  void _drawRoomInfo(
-    Canvas canvas,
-    Rect rect,
-    String name,
-    double area,
-  ) {
-    final textPainter = TextPainter(
-      textAlign: TextAlign.center,
-      text: TextSpan(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          TextSpan(
-            text: '$name\n',
-            style: const TextStyle(
-              color: Color(0xFF0D1B2A),
-              fontWeight: FontWeight.w900,
-              fontSize: 11,
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(
+                color: const Color(0xFFCBD5E1),
+              ),
             ),
           ),
-          TextSpan(
-            text: '${area.toStringAsFixed(1)} m²',
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontSize: 9,
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF334155),
+              fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: rect.width - 8);
-
-    textPainter.paint(
-      canvas,
-      Offset(
-        rect.center.dx - (textPainter.width / 2),
-        rect.center.dy - (textPainter.height / 2),
-      ),
     );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

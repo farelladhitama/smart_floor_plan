@@ -10,6 +10,9 @@ import 'package:smart_floor_plan/app/modules/rab/views/rab_page.dart';
 class HasilDenahController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
 
+  /// Edit Denah dan RAB lama masih menggunakan ukuran visual berbasis pixel.
+  /// Engine generate baru menggunakan satuan meter.
+  /// Skala ini menjadi jembatan sementara agar fitur lama tetap berjalan.
   final double skala = 20.0;
 
   final currentRooms = <RoomModel>[].obs;
@@ -27,12 +30,23 @@ class HasilDenahController extends GetxController {
     isSaved.value = false;
   }
 
+  double get totalRoomArea {
+    return currentRooms.fold(
+      0,
+      (total, room) => total + room.area,
+    );
+  }
+
+  int get indoorRoomCount {
+    return currentRooms.where((room) => !room.isOutdoor).length;
+  }
+
   void simpanDenah() {
     isSaved.value = true;
 
     Get.snackbar(
       'Berhasil',
-      'Denah telah disimpan ke koleksi Anda',
+      'Denah telah disimpan sementara dan siap dihitung RAB.',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: navy,
       colorText: Colors.white,
@@ -51,12 +65,14 @@ class HasilDenahController extends GetxController {
 
     final result = await Get.to(
       () => EditDenahPage(
-        initialRooms: currentRooms.toList(),
+        initialRooms: _convertMetersToLegacyPixels(currentRooms.toList()),
       ),
     );
 
     if (result != null && result is List<RoomModel>) {
-      currentRooms.assignAll(result);
+      currentRooms.assignAll(
+        _convertLegacyPixelsToMeters(result),
+      );
       isSaved.value = false;
     }
   }
@@ -70,9 +86,31 @@ class HasilDenahController extends GetxController {
 
     Get.to(
       () => RABPage(
-        rooms: currentRooms.toList(),
+        rooms: _convertMetersToLegacyPixels(currentRooms.toList()),
       ),
     );
+  }
+
+  List<RoomModel> _convertMetersToLegacyPixels(List<RoomModel> meterRooms) {
+    return meterRooms.map((room) {
+      return room.copyWith(
+        x: room.x * skala,
+        y: room.y * skala,
+        width: room.width * skala,
+        height: room.height * skala,
+      );
+    }).toList();
+  }
+
+  List<RoomModel> _convertLegacyPixelsToMeters(List<RoomModel> pixelRooms) {
+    return pixelRooms.map((room) {
+      return room.copyWith(
+        x: room.x / skala,
+        y: room.y / skala,
+        width: room.width / skala,
+        height: room.height / skala,
+      );
+    }).toList();
   }
 
   @override
