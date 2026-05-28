@@ -54,3 +54,15 @@ backend_smartfloorplan/**/__pycache__/
 # Backend virtual environment
 backend_smartfloorplan/venv/
 
+
+# Environment secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
+
+# Environment secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
