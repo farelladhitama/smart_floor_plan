@@ -1,203 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:smart_floor_plan/app/modules/login/controllers/login_controller.dart';
+import 'package:smart_floor_plan/app/routes/app_routes.dart';
+import '../controllers/login_controller.dart';
 
 class LoginScreen extends GetView<LoginController> {
   const LoginScreen({super.key});
 
   static const Color navy = Color(0xFF0D1B2A);
+  static const Color navyLight = Color(0xFF173451);
   static const Color orange = Color(0xFFE47B3E);
-  static const Color softBg = Color(0xFFEFF3F6);
+  static const Color orangeLight = Color(0xFFFF9950);
+  static const Color background = Color(0xFFF5F7FB);
+  static const Color fieldBackground = Color(0xFFF8FAFD);
+  static const Color border = Color(0xFFE3EAF2);
+  static const Color secondaryText = Color(0xFF718096);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: navy,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 430),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
-                    decoration: BoxDecoration(
-                      color: softBg,
-                      borderRadius: BorderRadius.circular(34),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.18),
-                          blurRadius: 35,
-                          offset: const Offset(0, 18),
-                        ),
-                      ],
-                    ),
-                    child: Obx(
-                      () => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildLogo(),
-
-                          const SizedBox(height: 24),
-
-                          Text(
-                            controller.isLogin
-                                ? 'SmartFloorPlan'
-                                : 'Buat Akun Baru',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black87,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          Text(
-                            controller.isLogin
-                                ? 'Masuk untuk mulai membuat desain rumah AI'
-                                : 'Daftar untuk menyimpan dan mengelola desain denah rumah Anda',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 15,
-                              height: 1.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-
-                          const SizedBox(height: 36),
-
-                          _buildTextField(
-                            controllerText: controller.usernameController,
-                            hintText: 'Masukkan Username',
-                            icon: Icons.person_rounded,
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          _buildTextField(
-                            controllerText: controller.passwordController,
-                            hintText: 'Masukkan Password',
-                            icon: Icons.lock_rounded,
-                            isPassword: true,
-                            isHidden: controller.isPasswordHidden.value,
-                            onToggleHidden:
-                                controller.togglePasswordVisibility,
-                          ),
-
-                          if (!controller.isLogin) ...[
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controllerText:
-                                  controller.confirmPasswordController,
-                              hintText: 'Konfirmasi Password',
-                              icon: Icons.verified_user_rounded,
-                              isPassword: true,
-                              isHidden:
-                                  controller.isConfirmPasswordHidden.value,
-                              onToggleHidden:
-                                  controller.toggleConfirmPasswordVisibility,
-                            ),
-                          ],
-
-                          const SizedBox(height: 18),
-
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: controller.isLoading.value
-                                  ? null
-                                  : controller.switchMode,
-                              child: Text(
-                                controller.isLogin
-                                    ? 'Belum punya akun? Register'
-                                    : 'Sudah punya akun? Login',
-                                style: const TextStyle(
-                                  color: navy,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          _buildMainButton(),
-
-                          const SizedBox(height: 28),
-
-                          _buildDivider(),
-
-                          const SizedBox(height: 24),
-
-                          _buildGoogleButton(),
-
-                          const SizedBox(height: 28),
-
-                          Text(
-                            controller.isLogin
-                                ? 'Dengan login Anda menyetujui syarat dan ketentuan aplikasi.'
-                                : 'Data akun manual disimpan secara lokal untuk kebutuhan demo aplikasi.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade500,
-                              fontSize: 12,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogo() {
-    return Container(
-      width: 72,
-      height: 72,
-      decoration: BoxDecoration(
-        color: navy,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: navy.withOpacity(0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
+      backgroundColor: background,
+      body: Stack(
         children: [
-          const Icon(
-            Icons.architecture_rounded,
-            color: Colors.white,
-            size: 38,
-          ),
-          Positioned(
-            right: 15,
-            bottom: 15,
-            child: Container(
-              width: 9,
-              height: 9,
-              decoration: const BoxDecoration(
-                color: orange,
-                shape: BoxShape.circle,
+          const _PageBackground(),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 18,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Column(
+                    children: [
+                      const _HeaderCard(),
+                      const SizedBox(height: 22),
+                      _LoginCard(controller: controller),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -205,188 +49,520 @@ class LoginScreen extends GetView<LoginController> {
       ),
     );
   }
+}
 
-  Widget _buildTextField({
-    required TextEditingController controllerText,
-    required String hintText,
-    required IconData icon,
-    bool isPassword = false,
-    bool isHidden = false,
-    VoidCallback? onToggleHidden,
-  }) {
-    return TextField(
-      controller: controllerText,
-      obscureText: isPassword ? isHidden : false,
-      keyboardType: TextInputType.text,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(
-          color: Colors.grey.shade600,
-          fontWeight: FontWeight.w500,
-        ),
-        prefixIcon: Icon(
-          icon,
-          color: Colors.grey.shade700,
-        ),
-        suffixIcon: isPassword
-            ? IconButton(
-                onPressed: onToggleHidden,
-                icon: Icon(
-                  isHidden
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  color: Colors.grey.shade600,
-                ),
-              )
-            : null,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 20,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(22)),
-          borderSide: BorderSide(
-            color: orange,
-            width: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
+class _PageBackground extends StatelessWidget {
+  const _PageBackground();
 
-  Widget _buildMainButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 58,
-      child: ElevatedButton(
-        onPressed: controller.isLoading.value ? null : controller.submitAuth,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: navy,
-          disabledBackgroundColor: navy.withOpacity(0.5),
-          elevation: 6,
-          shadowColor: navy.withOpacity(0.25),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-        ),
-        child: controller.isLoading.value
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2.4,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    controller.isLogin ? 'Log In' : 'Register',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Icon(
-                    controller.isLogin
-                        ? Icons.arrow_forward_rounded
-                        : Icons.person_add_alt_1_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
       children: [
-        Expanded(
+        Positioned(
+          top: -120,
+          right: -90,
           child: Container(
-            height: 1,
-            color: Colors.grey.shade300,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Text(
-            'atau lanjut dengan',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+            width: 300,
+            height: 300,
+            decoration: BoxDecoration(
+              color: LoginScreen.orange.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
             ),
           ),
         ),
-        Expanded(
+        Positioned(
+          bottom: -140,
+          left: -120,
           child: Container(
-            height: 1,
-            color: Colors.grey.shade300,
+            width: 360,
+            height: 360,
+            decoration: BoxDecoration(
+              color: LoginScreen.navy.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildGoogleButton() {
-    return SizedBox(
+class _HeaderCard extends StatelessWidget {
+  const _HeaderCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
       width: double.infinity,
-      height: 56,
-      child: OutlinedButton(
-        onPressed:
-            controller.isLoading.value ? null : controller.loginWithGoogle,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            LoginScreen.navy,
+            LoginScreen.navyLight,
+          ],
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: LoginScreen.navy.withValues(alpha: 0.15),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: const Row(
+        children: [
+          _LogoIcon(),
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SmartFloorPlan',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Rancang rumah lebih cerdas',
+                  style: TextStyle(
+                    color: Color(0xFF9CACBC),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.home_work_outlined,
+            color: Color(0xFF52677D),
+            size: 31,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoIcon extends StatelessWidget {
+  const _LogoIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            LoginScreen.orange,
+            LoginScreen.orangeLight,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: const Icon(
+        Icons.architecture_rounded,
+        color: Colors.white,
+        size: 30,
+      ),
+    );
+  }
+}
+
+class _LoginCard extends StatelessWidget {
+  final LoginController controller;
+
+  const _LoginCard({
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = MediaQuery.sizeOf(context).width < 380;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        compact ? 20 : 24,
+        30,
+        compact ? 20 : 24,
+        26,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: const Color(0xFFE9EEF4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: LoginScreen.navy.withValues(alpha: 0.07),
+            blurRadius: 28,
+            offset: const Offset(0, 13),
+          ),
+        ],
+      ),
+      child: Obx(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'G',
+            const Text(
+              'Selamat datang',
               style: TextStyle(
-                color: Colors.black,
-                fontSize: 22,
+                color: LoginScreen.navy,
+                fontSize: 31,
                 fontWeight: FontWeight.w900,
+                letterSpacing: -0.7,
               ),
             ),
-            SizedBox(width: 18),
-            Text(
-              'Login dengan Google',
+            const SizedBox(height: 8),
+            const Text(
+              'Masuk untuk melanjutkan project denah Anda.',
               style: TextStyle(
-                color: Colors.black87,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+                color: LoginScreen.secondaryText,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _AppField(
+              controller: controller.emailController,
+              label: 'Email',
+              hintText: 'nama@email.com',
+              icon: Icons.alternate_email_rounded,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.email],
+            ),
+            const SizedBox(height: 17),
+            _PasswordField(
+              controller: controller,
+              label: 'Password',
+              hintText: 'Masukkan password',
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.password],
+              onSubmitted: (_) => controller.submitAuth(),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: controller.isLoading.value
+                    ? null
+                    : controller.forgotPasswordComingSoon,
+                child: const Text(
+                  'Lupa password?',
+                  style: TextStyle(
+                    color: LoginScreen.orange,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _SubmitButton(
+              isLoading: controller.isLoading.value,
+              label: 'Masuk',
+              onPressed: controller.submitAuth,
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text(
+                    'Belum punya akun? ',
+                    style: TextStyle(
+                      color: LoginScreen.secondaryText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: controller.isLoading.value
+                        ? null
+                        : () =>controller.changeMode(AuthMode.register),
+                    child: const Text(
+                      'Register sekarang',
+                      style: TextStyle(
+                        color: LoginScreen.orange,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 13,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: LoginScreen.orange.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.mark_email_read_outlined,
+                    color: LoginScreen.orange,
+                    size: 19,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'OTP hanya diminta saat verifikasi awal akun.',
+                      style: TextStyle(
+                        color: LoginScreen.secondaryText,
+                        fontSize: 12,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PasswordField extends StatelessWidget {
+  final LoginController controller;
+  final String label;
+  final String hintText;
+  final TextInputAction textInputAction;
+  final Iterable<String>? autofillHints;
+  final ValueChanged<String>? onSubmitted;
+
+  const _PasswordField({
+    required this.controller,
+    required this.label,
+    required this.hintText,
+    required this.textInputAction,
+    this.autofillHints,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () {
+        final bool hidden = controller.isPasswordHidden.value;
+
+        return _AppField(
+          controller: controller.passwordController,
+          label: label,
+          hintText: hintText,
+          icon: Icons.lock_outline_rounded,
+          obscureText: hidden,
+          textInputAction: textInputAction,
+          autofillHints: autofillHints,
+          onSubmitted: onSubmitted,
+          suffixIcon: IconButton(
+            onPressed: controller.togglePasswordVisibility,
+            icon: Icon(
+              hidden
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              size: 20,
+              color: const Color(0xFF7D8CA0),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AppField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hintText;
+  final IconData icon;
+  final TextInputType keyboardType;
+  final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final ValueChanged<String>? onSubmitted;
+  final Iterable<String>? autofillHints;
+
+  const _AppField({
+    required this.controller,
+    required this.label,
+    required this.hintText,
+    required this.icon,
+    this.keyboardType = TextInputType.text,
+    this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.onSubmitted,
+    this.autofillHints,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: LoginScreen.navy,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          textCapitalization: textCapitalization,
+          obscureText: obscureText,
+          onSubmitted: onSubmitted,
+          autofillHints: autofillHints,
+          style: const TextStyle(
+            color: LoginScreen.navy,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: const TextStyle(
+              color: Color(0xFFA0ACBD),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: const Color(0xFF7A879B),
+              size: 22,
+            ),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: LoginScreen.fieldBackground,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 18,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: const BorderSide(
+                color: LoginScreen.border,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: const BorderSide(
+                color: LoginScreen.orange,
+                width: 1.6,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SubmitButton extends StatelessWidget {
+  final bool isLoading;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _SubmitButton({
+    required this.isLoading,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isLoading
+                ? [
+                    LoginScreen.orange.withValues(alpha: 0.55),
+                    LoginScreen.orangeLight.withValues(alpha: 0.55),
+                  ]
+                : const [
+                    LoginScreen.orange,
+                    LoginScreen.orangeLight,
+                  ],
+          ),
+          borderRadius: BorderRadius.circular(17),
+          boxShadow: isLoading
+              ? []
+              : [
+                  BoxShadow(
+                    color: LoginScreen.orange.withValues(alpha: 0.28),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+        ),
+        child: ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(17),
+            ),
+          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.4,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 21,
+                    ),
+                  ],
+                ),
         ),
       ),
     );
