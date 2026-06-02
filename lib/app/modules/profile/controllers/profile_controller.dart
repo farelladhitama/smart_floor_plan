@@ -1,55 +1,138 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
 
 class ProfileController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
+  static const Color orange = Color(0xFFE47B3E);
 
-  final username = 'User SmartFloorPlan'.obs;
-  final email = ''.obs;
-  final photoUrl = ''.obs;
-  final isGoogleLogin = false.obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isLoggingOut = false.obs;
+
+  final RxString fullName = ''.obs;
+  final RxString email = ''.obs;
+  final RxString userId = ''.obs;
+
+  SupabaseClient get _supabase => Supabase.instance.client;
 
   @override
   void onInit() {
     super.onInit();
-    loadUserData();
+    loadProfile();
   }
 
-  Future<void> loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> loadProfile() async {
+    final User? user = _supabase.auth.currentUser;
 
-    username.value = prefs.getString('username') ?? 'User SmartFloorPlan';
-    email.value = prefs.getString('email') ?? '';
-    photoUrl.value = prefs.getString('photoUrl') ?? '';
-    isGoogleLogin.value = prefs.getBool('isGoogleLogin') ?? false;
+    if (user == null) {
+      Get.offAllNamed(AppRoutes.login);
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+
+      userId.value = user.id;
+      email.value = user.email ?? '';
+
+      final Map<String, dynamic>? profile = await _supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profile != null) {
+        fullName.value = (profile['full_name'] ?? '').toString();
+        email.value = (profile['email'] ?? user.email ?? '').toString();
+      } else {
+        fullName.value =
+            user.userMetadata?['full_name']?.toString().trim() ??
+                user.userMetadata?['display_name']?.toString().trim() ??
+                'Pengguna SmartFloorPlan';
+      }
+    } on PostgrestException catch (error) {
+      showMessage(
+        'Gagal Memuat Profil',
+        error.message,
+      );
+    } catch (error) {
+      showMessage(
+        'Gagal Memuat Profil',
+        'Terjadi kesalahan: $error',
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setBool('isLoggedIn', false);
-
-    if (isGoogleLogin.value) {
-      await FirebaseAuth.instance.signOut();
+    if (isLoggingOut.value) {
+      return;
     }
 
-    Get.offAllNamed(AppRoutes.login);
+    try {
+      isLoggingOut.value = true;
+
+      await _supabase.auth.signOut();
+
+      Get.offAllNamed(AppRoutes.login);
+
+      showMessage(
+        'Logout Berhasil',
+        'Anda telah keluar dari akun SmartFloorPlan.',
+      );
+    } catch (error) {
+      showMessage(
+        'Logout Gagal',
+        'Terjadi kesalahan: $error',
+      );
+    } finally {
+      isLoggingOut.value = false;
+    }
   }
 
-  void showInfo(String title) {
+  String get displayName {
+    if (fullName.value.trim().isEmpty) {
+      return 'Pengguna SmartFloorPlan';
+    }
+
+    return fullName.value.trim();
+  }
+
+  String get displayEmail {
+    if (email.value.trim().isEmpty) {
+      return 'Email tidak tersedia';
+    }
+
+    return email.value.trim();
+  }
+
+  String get initialName {
+    final String name = displayName.trim();
+
+    if (name.isEmpty) {
+      return 'S';
+    }
+
+    return name[0].toUpperCase();
+  }
+
+  void showMessage(String title, String message) {
     Get.snackbar(
-      'Info',
-      '$title belum tersedia. Fitur ini bisa dikembangkan nanti.',
+      title,
+      message,
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: navy,
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
-      borderRadius: 14,
-      duration: const Duration(seconds: 2),
+      borderRadius: 16,
+      duration: const Duration(seconds: 4),
+      icon: const Icon(
+        Icons.info_outline_rounded,
+        color: orange,
+      ),
     );
   }
 }

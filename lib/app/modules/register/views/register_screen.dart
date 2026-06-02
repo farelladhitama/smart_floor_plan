@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
-import '../controllers/login_controller.dart';
+import '../controllers/register_controller.dart';
 
-class LoginScreen extends GetView<LoginController> {
-  const LoginScreen({super.key});
+class RegisterScreen extends GetView<RegisterController> {
+  const RegisterScreen({super.key});
 
   static const Color navy = Color(0xFF0D1B2A);
   static const Color navyLight = Color(0xFF173451);
@@ -38,7 +38,7 @@ class LoginScreen extends GetView<LoginController> {
                     children: [
                       const _HeaderCard(),
                       const SizedBox(height: 22),
-                      _LoginCard(controller: controller),
+                      _RegisterCard(controller: controller),
                     ],
                   ),
                 ),
@@ -65,7 +65,7 @@ class _PageBackground extends StatelessWidget {
             width: 300,
             height: 300,
             decoration: BoxDecoration(
-              color: LoginScreen.orange.withValues(alpha: 0.10),
+              color: RegisterScreen.orange.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
           ),
@@ -77,7 +77,7 @@ class _PageBackground extends StatelessWidget {
             width: 360,
             height: 360,
             decoration: BoxDecoration(
-              color: LoginScreen.navy.withValues(alpha: 0.05),
+              color: RegisterScreen.navy.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
           ),
@@ -98,14 +98,14 @@ class _HeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            LoginScreen.navy,
-            LoginScreen.navyLight,
+            RegisterScreen.navy,
+            RegisterScreen.navyLight,
           ],
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: LoginScreen.navy.withValues(alpha: 0.15),
+            color: RegisterScreen.navy.withValues(alpha: 0.15),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -129,7 +129,7 @@ class _HeaderCard extends StatelessWidget {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'Rancang rumah lebih cerdas',
+                  'Buat akun untuk menyimpan denah',
                   style: TextStyle(
                     color: Color(0xFF9CACBC),
                     fontSize: 13,
@@ -140,7 +140,7 @@ class _HeaderCard extends StatelessWidget {
             ),
           ),
           Icon(
-            Icons.home_work_outlined,
+            Icons.person_add_alt_1_rounded,
             color: Color(0xFF52677D),
             size: 31,
           ),
@@ -161,8 +161,8 @@ class _LogoIcon extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            LoginScreen.orange,
-            LoginScreen.orangeLight,
+            RegisterScreen.orange,
+            RegisterScreen.orangeLight,
           ],
         ),
         borderRadius: BorderRadius.circular(17),
@@ -176,10 +176,10 @@ class _LogoIcon extends StatelessWidget {
   }
 }
 
-class _LoginCard extends StatelessWidget {
-  final LoginController controller;
+class _RegisterCard extends StatelessWidget {
+  final RegisterController controller;
 
-  const _LoginCard({
+  const _RegisterCard({
     required this.controller,
   });
 
@@ -203,7 +203,7 @@ class _LoginCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: LoginScreen.navy.withValues(alpha: 0.07),
+            color: RegisterScreen.navy.withValues(alpha: 0.07),
             blurRadius: 28,
             offset: const Offset(0, 13),
           ),
@@ -214,9 +214,9 @@ class _LoginCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Selamat datang',
+              'Buat akun baru',
               style: TextStyle(
-                color: LoginScreen.navy,
+                color: RegisterScreen.navy,
                 fontSize: 31,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.7,
@@ -224,14 +224,24 @@ class _LoginCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Masuk untuk melanjutkan project denah Anda.',
+              'Daftar agar hasil denah dapat tersimpan.',
               style: TextStyle(
-                color: LoginScreen.secondaryText,
+                color: RegisterScreen.secondaryText,
                 fontSize: 14,
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 28),
+            _AppField(
+              controller: controller.nameController,
+              label: 'Nama Lengkap',
+              hintText: 'Masukkan nama lengkap',
+              icon: Icons.person_outline_rounded,
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.words,
+              autofillHints: const [AutofillHints.name],
+            ),
+            const SizedBox(height: 17),
             _AppField(
               controller: controller.emailController,
               label: 'Email',
@@ -245,33 +255,26 @@ class _LoginCard extends StatelessWidget {
             _PasswordField(
               controller: controller,
               label: 'Password',
-              hintText: 'Masukkan password',
+              hintText: 'Minimal 8 karakter',
+              isConfirmation: false,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+            ),
+            const SizedBox(height: 17),
+            _PasswordField(
+              controller: controller,
+              label: 'Konfirmasi Password',
+              hintText: 'Ulangi password',
+              isConfirmation: true,
               textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.password],
-              onSubmitted: (_) => controller.submitAuth(),
+              autofillHints: const [AutofillHints.newPassword],
+              onSubmitted: (_) => controller.registerWithEmail(),
             ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: controller.isLoading.value
-                    ? null
-                    : controller.forgotPasswordComingSoon,
-                child: const Text(
-                  'Lupa password?',
-                  style: TextStyle(
-                    color: LoginScreen.orange,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 26),
             _SubmitButton(
               isLoading: controller.isLoading.value,
-              label: 'Masuk',
-              onPressed: controller.submitAuth,
+              label: 'Daftar Akun',
+              onPressed: controller.registerWithEmail,
             ),
             const SizedBox(height: 24),
             Center(
@@ -280,24 +283,24 @@ class _LoginCard extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   const Text(
-                    'Belum punya akun? ',
+                    'Sudah punya akun? ',
                     style: TextStyle(
-                      color: LoginScreen.secondaryText,
+                      color: RegisterScreen.secondaryText,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Get.toNamed(AppRoutes.register);
-                    },
+                    onTap: controller.isLoading.value
+                        ? null
+                        : () => Get.offNamed(AppRoutes.login),
                     child: const Text(
-                      'Register sekarang',
-                    style: TextStyle(
-                      color: LoginScreen.orange,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                     ),
+                      'Login sekarang',
+                      style: TextStyle(
+                        color: RegisterScreen.orange,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ],
@@ -311,22 +314,22 @@ class _LoginCard extends StatelessWidget {
                 vertical: 12,
               ),
               decoration: BoxDecoration(
-                color: LoginScreen.orange.withValues(alpha: 0.08),
+                color: RegisterScreen.orange.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Row(
                 children: [
                   Icon(
-                    Icons.mark_email_read_outlined,
-                    color: LoginScreen.orange,
+                    Icons.info_outline_rounded,
+                    color: RegisterScreen.orange,
                     size: 19,
                   ),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'OTP hanya diminta saat verifikasi awal akun.',
+                      'OTP keamanan akan diminta saat login pertama kali.',
                       style: TextStyle(
-                        color: LoginScreen.secondaryText,
+                        color: RegisterScreen.secondaryText,
                         fontSize: 12,
                         height: 1.45,
                         fontWeight: FontWeight.w600,
@@ -344,9 +347,10 @@ class _LoginCard extends StatelessWidget {
 }
 
 class _PasswordField extends StatelessWidget {
-  final LoginController controller;
+  final RegisterController controller;
   final String label;
   final String hintText;
+  final bool isConfirmation;
   final TextInputAction textInputAction;
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onSubmitted;
@@ -355,6 +359,7 @@ class _PasswordField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.hintText,
+    required this.isConfirmation,
     required this.textInputAction,
     this.autofillHints,
     this.onSubmitted,
@@ -364,19 +369,27 @@ class _PasswordField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () {
-        final bool hidden = controller.isPasswordHidden.value;
+        final bool hidden = isConfirmation
+            ? controller.isConfirmPasswordHidden.value
+            : controller.isPasswordHidden.value;
 
         return _AppField(
-          controller: controller.passwordController,
+          controller: isConfirmation
+              ? controller.confirmPasswordController
+              : controller.passwordController,
           label: label,
           hintText: hintText,
-          icon: Icons.lock_outline_rounded,
+          icon: isConfirmation
+              ? Icons.verified_user_outlined
+              : Icons.lock_outline_rounded,
           obscureText: hidden,
           textInputAction: textInputAction,
           autofillHints: autofillHints,
           onSubmitted: onSubmitted,
           suffixIcon: IconButton(
-            onPressed: controller.togglePasswordVisibility,
+            onPressed: isConfirmation
+                ? controller.toggleConfirmPasswordVisibility
+                : controller.togglePasswordVisibility,
             icon: Icon(
               hidden
                   ? Icons.visibility_off_outlined
@@ -426,7 +439,7 @@ class _AppField extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: LoginScreen.navy,
+            color: RegisterScreen.navy,
             fontSize: 13,
             fontWeight: FontWeight.w800,
           ),
@@ -441,7 +454,7 @@ class _AppField extends StatelessWidget {
           onSubmitted: onSubmitted,
           autofillHints: autofillHints,
           style: const TextStyle(
-            color: LoginScreen.navy,
+            color: RegisterScreen.navy,
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),
@@ -459,7 +472,7 @@ class _AppField extends StatelessWidget {
             ),
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: LoginScreen.fieldBackground,
+            fillColor: RegisterScreen.fieldBackground,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 18,
@@ -467,13 +480,13 @@ class _AppField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(17),
               borderSide: const BorderSide(
-                color: LoginScreen.border,
+                color: RegisterScreen.border,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(17),
               borderSide: const BorderSide(
-                color: LoginScreen.orange,
+                color: RegisterScreen.orange,
                 width: 1.6,
               ),
             ),
@@ -505,12 +518,12 @@ class _SubmitButton extends StatelessWidget {
           gradient: LinearGradient(
             colors: isLoading
                 ? [
-                    LoginScreen.orange.withValues(alpha: 0.55),
-                    LoginScreen.orangeLight.withValues(alpha: 0.55),
+                    RegisterScreen.orange.withValues(alpha: 0.55),
+                    RegisterScreen.orangeLight.withValues(alpha: 0.55),
                   ]
                 : const [
-                    LoginScreen.orange,
-                    LoginScreen.orangeLight,
+                    RegisterScreen.orange,
+                    RegisterScreen.orangeLight,
                   ],
           ),
           borderRadius: BorderRadius.circular(17),
@@ -518,7 +531,7 @@ class _SubmitButton extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: LoginScreen.orange.withValues(alpha: 0.28),
+                    color: RegisterScreen.orange.withValues(alpha: 0.28),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),

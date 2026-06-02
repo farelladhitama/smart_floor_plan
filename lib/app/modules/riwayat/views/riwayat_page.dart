@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/riwayat_controller.dart';
 
-class RiwayatPage extends GetView<RiwayatController> {
+class RiwayatPage extends StatelessWidget {
   const RiwayatPage({super.key});
 
   static const Color navy = Color(0xFF0D1B2A);
@@ -11,11 +11,17 @@ class RiwayatPage extends GetView<RiwayatController> {
   static const Color background = Color(0xFFF5F7FA);
   static const Color softGrey = Color(0xFFEDEFF3);
 
+  RiwayatController get controller {
+    if (Get.isRegistered<RiwayatController>()) {
+      return Get.find<RiwayatController>();
+    }
+
+    return Get.put(RiwayatController());
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<RiwayatController>()) {
-      Get.put(RiwayatController());
-    }
+    final RiwayatController riwayatController = controller;
 
     return SafeArea(
       child: LayoutBuilder(
@@ -27,37 +33,60 @@ class RiwayatPage extends GetView<RiwayatController> {
           return Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxWidth),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 24,
-                  isMobile ? 18 : 24,
-                  isMobile ? 16 : 24,
-                  110,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(isMobile),
-                    const SizedBox(height: 22),
-                    _buildSummary(isMobile),
-                    const SizedBox(height: 20),
-                    Obx(() {
-                      return Column(
-                        children: controller.histories.map((item) {
-                          return _buildHistoryCard(
-                            isMobile: isMobile,
-                            title: item['title'] ?? '-',
-                            subtitle: item['subtitle'] ?? '-',
-                            date: item['date'] ?? '-',
-                            type: item['type'] ?? 'manual',
+              child: RefreshIndicator(
+                onRefresh: riwayatController.loadHistories,
+                color: orange,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    isMobile ? 16 : 24,
+                    isMobile ? 18 : 24,
+                    isMobile ? 16 : 24,
+                    110,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(
+                        isMobile: isMobile,
+                        controller: riwayatController,
+                      ),
+                      const SizedBox(height: 22),
+                      _buildSummary(
+                        isMobile: isMobile,
+                        controller: riwayatController,
+                      ),
+                      const SizedBox(height: 20),
+                      Obx(() {
+                        if (riwayatController.isLoading.value) {
+                          return const SizedBox(
+                            height: 260,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: orange,
+                              ),
+                            ),
                           );
-                        }).toList(),
-                      );
-                    }),
-                    const SizedBox(height: 12),
-                    _buildInfoBox(isMobile),
-                  ],
+                        }
+
+                        if (riwayatController.histories.isEmpty) {
+                          return _buildEmptyBox(isMobile);
+                        }
+
+                        return Column(
+                          children: riwayatController.histories.map((item) {
+                            return _buildHistoryCard(
+                              isMobile: isMobile,
+                              item: item,
+                              controller: riwayatController,
+                            );
+                          }).toList(),
+                        );
+                      }),
+                      const SizedBox(height: 12),
+                      _buildInfoBox(isMobile),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -67,7 +96,10 @@ class RiwayatPage extends GetView<RiwayatController> {
     );
   }
 
-  Widget _buildHeader(bool isMobile) {
+  Widget _buildHeader({
+    required bool isMobile,
+    required RiwayatController controller,
+  }) {
     return Row(
       children: [
         Expanded(
@@ -84,7 +116,7 @@ class RiwayatPage extends GetView<RiwayatController> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Daftar rancangan denah yang pernah dibuat.',
+                'Daftar rancangan denah yang tersimpan di Supabase.',
                 style: TextStyle(
                   color: Colors.black54,
                   fontSize: isMobile ? 13.5 : 15,
@@ -94,31 +126,38 @@ class RiwayatPage extends GetView<RiwayatController> {
             ],
           ),
         ),
-        Container(
-          width: isMobile ? 48 : 54,
-          height: isMobile ? 48 : 54,
-          decoration: BoxDecoration(
-            color: navy,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: navy.withOpacity(0.18),
-                blurRadius: 14,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.history_rounded,
-            color: Colors.white,
-            size: isMobile ? 25 : 28,
+        InkWell(
+          onTap: () => controller.loadHistories(),
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            width: isMobile ? 48 : 54,
+            height: isMobile ? 48 : 54,
+            decoration: BoxDecoration(
+              color: navy,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: navy.withOpacity(0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.refresh_rounded,
+              color: Colors.white,
+              size: isMobile ? 25 : 28,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSummary(bool isMobile) {
+  Widget _buildSummary({
+    required bool isMobile,
+    required RiwayatController controller,
+  }) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 16 : 20),
@@ -164,7 +203,7 @@ class RiwayatPage extends GetView<RiwayatController> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Contoh data riwayat untuk tampilan demo aplikasi.',
+                    'Data riwayat diambil langsung dari tabel floor_plans.',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: isMobile ? 12.5 : 14,
@@ -182,15 +221,9 @@ class RiwayatPage extends GetView<RiwayatController> {
 
   Widget _buildHistoryCard({
     required bool isMobile,
-    required String title,
-    required String subtitle,
-    required String date,
-    required String type,
+    required Map<String, dynamic> item,
+    required RiwayatController controller,
   }) {
-    final IconData icon = type == 'scan'
-        ? Icons.document_scanner_rounded
-        : Icons.home_work_rounded;
-
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
@@ -219,7 +252,7 @@ class RiwayatPage extends GetView<RiwayatController> {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Icon(
-                  icon,
+                  Icons.home_work_rounded,
                   color: navy,
                   size: isMobile ? 28 : 31,
                 ),
@@ -230,7 +263,7 @@ class RiwayatPage extends GetView<RiwayatController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      controller.getTitle(item),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -241,8 +274,8 @@ class RiwayatPage extends GetView<RiwayatController> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      subtitle,
-                      maxLines: 1,
+                      controller.getSubtitle(item),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.black54,
@@ -252,7 +285,7 @@ class RiwayatPage extends GetView<RiwayatController> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      date,
+                      controller.getDate(item),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -265,6 +298,29 @@ class RiwayatPage extends GetView<RiwayatController> {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _smallInfoChip(
+                  icon: Icons.meeting_room_rounded,
+                  text: '${controller.getRoomCount(item)} ruang',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _smallInfoChip(
+                  icon: Icons.square_foot_rounded,
+                  text: controller.getAreaText(item),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _smallInfoChip(
+            icon: Icons.receipt_long_rounded,
+            text: controller.getRabText(item),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -273,7 +329,7 @@ class RiwayatPage extends GetView<RiwayatController> {
                   label: 'Detail',
                   icon: Icons.visibility_rounded,
                   isPrimary: true,
-                  onTap: () => controller.openDetail(title),
+                  onTap: () => controller.openDetail(item),
                 ),
               ),
               const SizedBox(width: 10),
@@ -282,10 +338,57 @@ class RiwayatPage extends GetView<RiwayatController> {
                   label: 'Edit',
                   icon: Icons.edit_rounded,
                   isPrimary: false,
-                  onTap: () => controller.openEdit(title),
+                  onTap: () => controller.openEdit(item),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 50,
+                child: _buildIconButton(
+                  icon: Icons.delete_rounded,
+                  onTap: () => controller.deleteHistory(item),
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _smallInfoChip({
+    required IconData icon,
+    required String text,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.10),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: orange,
+            size: 17,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: navy,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
@@ -302,7 +405,10 @@ class RiwayatPage extends GetView<RiwayatController> {
       height: 44,
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, size: 18),
+        icon: Icon(
+          icon,
+          size: 18,
+        ),
         label: Text(
           label,
           style: const TextStyle(
@@ -318,6 +424,76 @@ class RiwayatPage extends GetView<RiwayatController> {
             borderRadius: BorderRadius.circular(15),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      height: 44,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red.withOpacity(0.09),
+          foregroundColor: Colors.red,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 21,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyBox(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 20 : 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.folder_open_rounded,
+            color: navy.withOpacity(0.35),
+            size: 58,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Belum ada riwayat',
+            style: TextStyle(
+              color: navy,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Generate denah lalu tekan Simpan Denah agar muncul di sini.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.black54,
+              height: 1.45,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -344,7 +520,7 @@ class RiwayatPage extends GetView<RiwayatController> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Riwayat ini masih menggunakan data demo untuk tampilan mobile. Fitur penyimpanan ke backend dapat dikembangkan pada tahap berikutnya.',
+              'Riwayat ini sudah mengambil data asli dari Supabase. Fitur Edit denah lama akan disambungkan pada tahap berikutnya.',
               style: TextStyle(
                 color: navy.withOpacity(0.75),
                 fontSize: isMobile ? 12.5 : 13.5,

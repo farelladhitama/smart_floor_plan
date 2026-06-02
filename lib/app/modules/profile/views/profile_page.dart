@@ -1,405 +1,505 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:smart_floor_plan/app/modules/profile/controllers/profile_controller.dart';
+import '../controllers/profile_controller.dart';
 
 class ProfilePage extends GetView<ProfileController> {
   const ProfilePage({super.key});
 
   static const Color navy = Color(0xFF0D1B2A);
+  static const Color navyLight = Color(0xFF173451);
   static const Color orange = Color(0xFFE47B3E);
-  static const Color background = Color(0xFFF5F7FA);
+  static const Color orangeLight = Color(0xFFFF9950);
+  static const Color background = Color(0xFFF5F7FB);
+  static const Color secondaryText = Color(0xFF718096);
+  static const Color border = Color(0xFFE3EAF2);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 110),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
+        child: RefreshIndicator(
+          onRefresh: controller.loadProfile,
+          color: orange,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 26),
+            child: Obx(
+              () {
+                if (controller.isLoading.value) {
+                  return SizedBox(
+                    height: MediaQuery.sizeOf(context).height * 0.75,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: orange,
+                      ),
+                    ),
+                  );
+                }
 
-              const SizedBox(height: 28),
-
-              _buildProfileCard(),
-
-              const SizedBox(height: 28),
-
-              const Text(
-                'Pengaturan Akun',
-                style: TextStyle(
-                  color: navy,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildMenuItem(
-                icon: Icons.person_outline_rounded,
-                title: 'Edit Profil',
-                subtitle: 'Ubah nama pengguna dan informasi akun',
-                onTap: () => controller.showInfo('Edit Profil'),
-              ),
-
-              _buildMenuItem(
-                icon: Icons.lock_outline_rounded,
-                title: 'Ganti Password',
-                subtitle: 'Perbarui password akun lokal Anda',
-                onTap: () => controller.showInfo('Ganti Password'),
-              ),
-
-              _buildMenuItem(
-                icon: Icons.palette_outlined,
-                title: 'Tema Aplikasi',
-                subtitle: 'Atur tampilan dan warna aplikasi',
-                onTap: () => controller.showInfo('Tema Aplikasi'),
-              ),
-
-              _buildMenuItem(
-                icon: Icons.info_outline_rounded,
-                title: 'Tentang Aplikasi',
-                subtitle: 'SmartFloorPlan versi demo project',
-                onTap: () => controller.showInfo('Tentang Aplikasi'),
-              ),
-
-              const SizedBox(height: 18),
-
-              _buildLogoutButton(),
-            ],
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _HeaderCard(),
+                    const SizedBox(height: 22),
+                    _ProfileCard(controller: controller),
+                    const SizedBox(height: 18),
+                    _AccountInfoCard(controller: controller),
+                    const SizedBox(height: 18),
+                    _MenuCard(controller: controller),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'Profil',
-            style: TextStyle(
-              color: navy,
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: navy,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            Icons.settings_rounded,
-            color: Colors.white,
-            size: 24,
-          ),
-        ),
-      ],
-    );
-  }
+class _HeaderCard extends StatelessWidget {
+  const _HeaderCard();
 
-  Widget _buildProfileCard() {
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: navy,
-        borderRadius: BorderRadius.circular(30),
+        gradient: const LinearGradient(
+          colors: [
+            ProfilePage.navy,
+            ProfilePage.navyLight,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.20),
+            color: ProfilePage.navy.withValues(alpha: 0.15),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: const Row(
+        children: [
+          _LogoIcon(),
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Profil Akun',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Data pengguna SmartFloorPlan',
+                  style: TextStyle(
+                    color: Color(0xFF9CACBC),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.manage_accounts_rounded,
+            color: Color(0xFF52677D),
+            size: 31,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoIcon extends StatelessWidget {
+  const _LogoIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            ProfilePage.orange,
+            ProfilePage.orangeLight,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: const Icon(
+        Icons.person_rounded,
+        color: Colors.white,
+        size: 31,
+      ),
+    );
+  }
+}
+
+class _ProfileCard extends StatelessWidget {
+  final ProfileController controller;
+
+  const _ProfileCard({
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: const Color(0xFFE9EEF4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ProfilePage.navy.withValues(alpha: 0.07),
             blurRadius: 28,
-            offset: const Offset(0, 14),
+            offset: const Offset(0, 13),
           ),
         ],
       ),
       child: Column(
         children: [
-          Obx(
-            () {
-              final photo = controller.photoUrl.value;
-
-              return Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.20),
-                    width: 2,
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  ProfilePage.orange,
+                  ProfilePage.orangeLight,
+                ],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: ProfilePage.orange.withValues(alpha: 0.25),
+                  blurRadius: 18,
+                  offset: const Offset(0, 9),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                controller.initialName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            controller.displayName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: ProfilePage.navy,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            controller.displayEmail,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: ProfilePage.secondaryText,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 9,
+            ),
+            decoration: BoxDecoration(
+              color: ProfilePage.orange.withValues(alpha: 0.09),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.verified_user_outlined,
+                  color: ProfilePage.orange,
+                  size: 18,
+                ),
+                SizedBox(width: 7),
+                Text(
+                  'Akun aktif',
+                  style: TextStyle(
+                    color: ProfilePage.orange,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                child: photo.isNotEmpty
-                    ? ClipOval(
-                        child: Image.network(
-                          photo,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.person_rounded,
-                              color: Colors.white,
-                              size: 52,
-                            );
-                          },
-                        ),
-                      )
-                    : const Icon(
-                        Icons.person_rounded,
-                        color: Colors.white,
-                        size: 52,
-                      ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 18),
-
-          Obx(
-            () => Text(
-              controller.username.value,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-              ),
+              ],
             ),
-          ),
-
-          const SizedBox(height: 6),
-
-          Obx(
-            () => Text(
-              controller.email.value.isEmpty
-                  ? 'Pengguna SmartFloorPlan'
-                  : controller.email.value,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.70),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 22),
-
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  value: 'AI',
-                  label: 'Generator',
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 42,
-                color: Colors.white.withOpacity(0.15),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  value: '2D',
-                  label: 'Denah',
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 42,
-                color: Colors.white.withOpacity(0.15),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  value: 'RAB',
-                  label: 'Estimasi',
-                ),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildStatItem({
-    required String value,
-    required String label,
-  }) {
-    return Column(
+class _AccountInfoCard extends StatelessWidget {
+  final ProfileController controller;
+
+  const _AccountInfoCard({
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: ProfilePage.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Informasi Akun',
+            style: TextStyle(
+              color: ProfilePage.navy,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _InfoRow(
+            icon: Icons.badge_outlined,
+            title: 'Nama Lengkap',
+            value: controller.displayName,
+          ),
+          const SizedBox(height: 14),
+          _InfoRow(
+            icon: Icons.alternate_email_rounded,
+            title: 'Email',
+            value: controller.displayEmail,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
       children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: orange,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
+        Container(
+          width: 43,
+          height: 43,
+          decoration: BoxDecoration(
+            color: ProfilePage.orange.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            color: ProfilePage.orange,
+            size: 22,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.70),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: ProfilePage.secondaryText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: ProfilePage.navy,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
+class _MenuCard extends StatelessWidget {
+  final ProfileController controller;
+
+  const _MenuCard({
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: navy.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: ProfilePage.border,
+        ),
+      ),
+      child: Column(
+        children: [
+          _MenuTile(
+            icon: Icons.refresh_rounded,
+            title: 'Muat ulang profil',
+            subtitle: 'Ambil ulang data dari Supabase',
+            onTap: controller.loadProfile,
+          ),
+          const Divider(height: 1),
+          Obx(
+            () => _MenuTile(
+              icon: Icons.logout_rounded,
+              title: 'Logout',
+              subtitle: 'Keluar dari akun SmartFloorPlan',
+              isDanger: true,
+              isLoading: controller.isLoggingOut.value,
+              onTap: controller.logout,
+            ),
           ),
         ],
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 10,
-        ),
-        leading: Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: orange.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(
-            icon,
-            color: orange,
-            size: 24,
-          ),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: navy,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios_rounded,
-          color: Colors.grey,
-          size: 16,
-        ),
-      ),
     );
   }
+}
 
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: _confirmLogout,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade600,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.logout_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-            SizedBox(width: 10),
-            Text(
-              'Logout',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isDanger;
+  final bool isLoading;
 
-  void _confirmLogout() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: navy,
+  const _MenuTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.isDanger = false,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color iconColor = isDanger ? Colors.redAccent : ProfilePage.orange;
+    final Color titleColor = isDanger ? Colors.redAccent : ProfilePage.navy;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isLoading ? null : onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: 12,
           ),
-        ),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari akun ini?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'Batal',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              controller.logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: orange,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              Container(
+                width: 43,
+                height: 43,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.09),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(11),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    : Icon(
+                        icon,
+                        color: iconColor,
+                        size: 22,
+                      ),
               ),
-            ),
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.white),
-            ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: ProfilePage.secondaryText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF9AA7B8),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -9,14 +9,21 @@ class HasilDenahPage extends GetView<HasilDenahController> {
   final List<RoomModel> rooms;
   final double inputPanjangRumah;
   final double inputLebarRumah;
+  final String? floorPlanId;
+  final String material;
+  final int jumlahKamar;
+  final List<String> ruangTambahan;
 
   const HasilDenahPage({
     super.key,
     required this.rooms,
     required this.inputPanjangRumah,
     required this.inputLebarRumah,
+    this.floorPlanId,
+    this.material = 'Batu Bata',
+    this.jumlahKamar = 1,
+    this.ruangTambahan = const [],
   });
-
   static const Color navy = Color(0xFF0D1B2A);
   static const Color navyLight = Color(0xFF1B263B);
   static const Color orange = Color(0xFFE47B3E);
@@ -26,6 +33,15 @@ class HasilDenahPage extends GetView<HasilDenahController> {
 
   @override
   Widget build(BuildContext context) {
+    controller.setMetadata(
+      inputFloorPlanId: floorPlanId,
+      inputLebarRumah: inputLebarRumah,
+      inputPanjangRumah: inputPanjangRumah,
+      inputJumlahKamar: jumlahKamar,
+      inputMaterial: material,
+      inputRuangTambahan: ruangTambahan,
+    );
+
     controller.setInitialRooms(rooms);
 
     return Scaffold(
@@ -204,6 +220,26 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               ],
             ),
           ),
+          const SizedBox(height: 9),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoTile(
+                  title: 'Material',
+                  value: material,
+                  icon: Icons.construction_rounded,
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: _buildInfoTile(
+                  title: 'Kamar',
+                  value: '$jumlahKamar',
+                  icon: Icons.bed_rounded,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 17),
           Container(
             width: double.infinity,
@@ -226,7 +262,7 @@ class HasilDenahPage extends GetView<HasilDenahController> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Zoom untuk melihat detail pintu, ukuran ruang, dan jalur akses. Gunakan Edit untuk mengatur posisi, ukuran, serta rotasi ruang.',
+                    'Tekan Simpan Denah agar data masuk ke database. Jika denah dibuka dari Riwayat, tombol Simpan Denah akan memperbarui data lama.',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 11.7,
@@ -584,18 +620,22 @@ class HasilDenahPage extends GetView<HasilDenahController> {
               flex: 2,
               child: Obx(
                 () => _bottomButton(
-                  label: controller.isSaved.value
-                      ? 'LIHAT RAB'
-                      : 'SIMPAN DENAH',
+                  label: controller.isSaving.value
+                      ? 'MENYIMPAN...'
+                      : controller.isSaved.value
+                          ? 'LIHAT RAB'
+                          : 'SIMPAN DENAH',
                   icon: controller.isSaved.value
                       ? Icons.receipt_long_rounded
                       : Icons.save_rounded,
                   color: controller.isSaved.value
                       ? const Color(0xFF15803D)
                       : orange,
-                  onTap: controller.isSaved.value
-                      ? controller.lihatRAB
-                      : controller.simpanDenah,
+                  onTap: controller.isSaving.value
+                      ? () {}
+                      : controller.isSaved.value
+                          ? controller.lihatRAB
+                          : () => controller.simpanDenah(),
                 ),
               ),
             ),

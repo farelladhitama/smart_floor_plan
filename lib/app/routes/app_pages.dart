@@ -3,20 +3,29 @@ import 'package:get/get.dart';
 import 'app_routes.dart';
 
 import '../modules/splash/views/splash_screen.dart';
-import '../modules/onboarding/views/onboarding_screen.dart';
-import '../modules/login/views/login_screen.dart';
-import '../modules/otp_verification/views/otp_verification_page.dart';
-import '../modules/dashboard/views/dashboard_page.dart';
-import '../modules/generate_form/views/generate_form_page.dart';
-import '../modules/scan_denah/views/scan_denah_page.dart';
-
 import '../modules/splash/bindings/splash_binding.dart';
+
+import '../modules/onboarding/views/onboarding_screen.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
+
+import '../modules/login/views/login_screen.dart';
 import '../modules/login/bindings/login_binding.dart';
+
+import '../modules/register/views/register_screen.dart';
+import '../modules/register/bindings/register_binding.dart';
+
+import '../modules/otp_verification/views/otp_verification_page.dart';
 import '../modules/otp_verification/bindings/otp_verification_binding.dart';
+
+import '../modules/dashboard/views/dashboard_page.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
+
 import '../modules/profile/bindings/profile_binding.dart';
+
+import '../modules/generate_form/views/generate_form_page.dart';
 import '../modules/generate_form/bindings/generate_form_binding.dart';
+
+import '../modules/scan_denah/views/scan_denah_page.dart';
 import '../modules/scan_denah/bindings/scan_denah_binding.dart';
 
 class AppPages {
@@ -37,6 +46,11 @@ class AppPages {
       name: AppRoutes.login,
       page: () => const LoginScreen(),
       binding: LoginBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.register,
+      page: () => const RegisterScreen(),
+      binding: RegisterBinding(),
     ),
     GetPage(
       name: AppRoutes.otpVerification,

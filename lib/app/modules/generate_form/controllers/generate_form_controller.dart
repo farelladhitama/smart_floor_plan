@@ -232,6 +232,9 @@ class GenerateFormController extends GetxController {
         rooms: generatedRooms,
         inputLebarRumah: result.landWidth,
         inputPanjangRumah: result.landLength,
+        material: selectedMaterial.value,
+        jumlahKamar: jumlahKamar.value,
+        ruangTambahan: ruangTambahanDetail.map((item) => item.name).toList(),
       ),
     );
   }
