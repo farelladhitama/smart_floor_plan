@@ -755,33 +755,99 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
       controller.rooms.refresh();
     } catch (_) {}
   }
-
   Future<void> _callSave(dynamic controller) async {
-    final bool success =
-        await _tryCallAsync(() => controller.saveFloorPlan()) ||
-        await _tryCallAsync(() => controller.saveDenah()) ||
-        await _tryCallAsync(() => controller.simpanDenah()) ||
-        await _tryCallAsync(() => controller.saveToSupabase()) ||
-        await _tryCallAsync(() => controller.simpanKeSupabase()) ||
-        await _tryCallAsync(() => controller.updateFloorPlan());
+    final List<RoomModel> saveRooms = _getRooms(controller);
+    final double saveLandWidth = _getLandWidth(controller);
+    final double saveLandLength = _getLandLength(controller);
 
-    if (success) {
+    if (saveRooms.isEmpty) {
       Get.snackbar(
-        'Berhasil',
-        'Denah berhasil disimpan.',
+        'Gagal Simpan',
+        'Tidak ada data ruangan yang dapat disimpan.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: navy,
+        backgroundColor: Colors.orange.shade700,
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 16,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       );
-    } else {
+      return;
+    }
+
+    int safeInt(dynamic value, int fallback) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? fallback;
+      return fallback;
+    }
+
+    final String? saveFloorPlanId =
+        widget.floorPlanId == null ? null : widget.floorPlanId.toString();
+
+    final String saveMaterial =
+        widget.material == null ? 'Batu Bata' : widget.material.toString();
+
+    final int saveJumlahKamar = safeInt(widget.jumlahKamar, 1);
+
+    final List<String> saveRuangTambahan = widget.ruangTambahan is List
+        ? (widget.ruangTambahan as List).map((item) => item.toString()).toList()
+        : <String>[];
+
+    try {
+      controller.resetRooms(saveRooms);
+    } catch (_) {
+      try {
+        controller.currentRooms.assignAll(saveRooms);
+      } catch (_) {}
+    }
+
+    try {
+      controller.setMetadata(
+        inputFloorPlanId: saveFloorPlanId,
+        inputLebarRumah: saveLandWidth,
+        inputPanjangRumah: saveLandLength,
+        inputJumlahKamar: saveJumlahKamar,
+        inputMaterial: saveMaterial,
+        inputRuangTambahan: saveRuangTambahan,
+      );
+    } catch (_) {
+      try {
+        controller.floorPlanId = saveFloorPlanId;
+      } catch (_) {}
+
+      try {
+        controller.landWidth = saveLandWidth;
+      } catch (_) {}
+
+      try {
+        controller.landLength = saveLandLength;
+      } catch (_) {}
+
+      try {
+        controller.jumlahKamar = saveJumlahKamar;
+      } catch (_) {}
+
+      try {
+        controller.material = saveMaterial;
+      } catch (_) {}
+
+      try {
+        controller.ruangTambahan = saveRuangTambahan;
+      } catch (_) {}
+    }
+
+    try {
+      controller.update();
+    } catch (_) {}
+
+    try {
+      await controller.simpanDenah();
+    } catch (error) {
       Get.snackbar(
-        'Info',
-        'Method simpan belum ditemukan di HasilDenahController.',
+        'Gagal Simpan',
+        'Terjadi kesalahan: $error',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.shade700,
+        backgroundColor: Colors.red.shade700,
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 16,
@@ -804,6 +870,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     }
   }
 }
+
 
 
 
