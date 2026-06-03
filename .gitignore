@@ -66,3 +66,4 @@ backend_smartfloorplan/venv/
 **/.env
 !.env.example
 !**/.env.example
+*.bak
