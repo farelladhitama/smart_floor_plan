@@ -1,8 +1,8 @@
+﻿import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/views/hasil_denah_page.dart';
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
@@ -77,7 +77,7 @@ class RiwayatController extends GetxController {
     final String kamar = (item['jumlah_kamar'] ?? 0).toString();
     final String material = (item['material'] ?? '-').toString();
 
-    return '$lebar m x $panjang m • $kamar kamar • $material';
+    return '$lebar m x $panjang m â€¢ $kamar kamar â€¢ $material';
   }
 
   String getDate(Map<String, dynamic> item) {
@@ -106,7 +106,7 @@ class RiwayatController extends GetxController {
   }
 
   String getAreaText(Map<String, dynamic> item) {
-    return '${_formatNumber(item['total_luas'])} m²';
+    return '${_formatNumber(item['total_luas'])} mÂ²';
   }
 
   String getRabText(Map<String, dynamic> item) {

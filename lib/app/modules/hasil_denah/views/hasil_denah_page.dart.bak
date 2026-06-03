@@ -1,31 +1,14 @@
-﻿import 'package:smart_floor_plan/app/data/models/room_model.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:smart_floor_plan/app/modules/edit_denah/views/edit_denah_page.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart';
 import 'package:smart_floor_plan/app/widgets/floor_plan_asset_overlay.dart';
 import 'package:smart_floor_plan/app/widgets/professional_floor_plan_painter.dart';
 
 class HasilDenahPage extends StatefulWidget {
-  final List<RoomModel> rooms;
-  final dynamic inputLebarRumah;
-  final dynamic inputPanjangRumah;
-  final dynamic floorPlanId;
-  final dynamic material;
-  final dynamic jumlahKamar;
-  final dynamic ruangTambahan;
-
-  const HasilDenahPage({
-    super.key,
-    this.rooms = const [],
-    this.inputLebarRumah,
-    this.inputPanjangRumah,
-    this.floorPlanId,
-    this.material,
-    this.jumlahKamar,
-    this.ruangTambahan,
-  });
+  const HasilDenahPage({super.key});
 
   @override
   State<HasilDenahPage> createState() => _HasilDenahPageState();
@@ -624,67 +607,58 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
   }
 
   dynamic _readRawRooms(dynamic controller) {
-  if (widget.rooms.isNotEmpty) {
-    return widget.rooms;
+    return _tryRead(() => controller.rooms) ??
+        _tryRead(() => controller.roomList) ??
+        _tryRead(() => controller.generatedRooms) ??
+        _tryRead(() => controller.hasilRooms) ??
+        _tryRead(() => controller.denahRooms) ??
+        _tryRead(() {
+          final dynamic args = Get.arguments;
+          if (args is Map) return args['rooms'];
+          return null;
+        });
   }
 
-  return _tryRead(() => controller.rooms) ??
-      _tryRead(() => controller.roomList) ??
-      _tryRead(() => controller.generatedRooms) ??
-      _tryRead(() => controller.hasilRooms) ??
-      _tryRead(() => controller.denahRooms) ??
-      _tryRead(() {
-        final dynamic args = Get.arguments;
-        if (args is Map) return args['rooms'];
-        return null;
-      });
-}
   double _getLandWidth(dynamic controller) {
-  if (widget.inputLebarRumah != null) {
-    return _toDouble(widget.inputLebarRumah, fallback: 8);
+    return _toDouble(
+      _tryRead(() => controller.inputLebarRumah) ??
+          _tryRead(() => controller.landWidth) ??
+          _tryRead(() => controller.lebarRumah) ??
+          _tryRead(() => controller.lebarLahan) ??
+          _tryRead(() {
+            final dynamic args = Get.arguments;
+            if (args is Map) {
+              return args['inputLebarRumah'] ??
+                  args['landWidth'] ??
+                  args['lebarRumah'] ??
+                  args['lebarLahan'];
+            }
+            return null;
+          }),
+      fallback: 8,
+    );
   }
 
-  return _toDouble(
-    _tryRead(() => controller.inputLebarRumah) ??
-        _tryRead(() => controller.landWidth) ??
-        _tryRead(() => controller.lebarRumah) ??
-        _tryRead(() => controller.lebarLahan) ??
-        _tryRead(() {
-          final dynamic args = Get.arguments;
-          if (args is Map) {
-            return args['inputLebarRumah'] ??
-                args['landWidth'] ??
-                args['lebarRumah'] ??
-                args['lebarLahan'];
-          }
-          return null;
-        }),
-    fallback: 8,
-  );
-}
   double _getLandLength(dynamic controller) {
-  if (widget.inputPanjangRumah != null) {
-    return _toDouble(widget.inputPanjangRumah, fallback: 10);
+    return _toDouble(
+      _tryRead(() => controller.inputPanjangRumah) ??
+          _tryRead(() => controller.landLength) ??
+          _tryRead(() => controller.panjangRumah) ??
+          _tryRead(() => controller.panjangLahan) ??
+          _tryRead(() {
+            final dynamic args = Get.arguments;
+            if (args is Map) {
+              return args['inputPanjangRumah'] ??
+                  args['landLength'] ??
+                  args['panjangRumah'] ??
+                  args['panjangLahan'];
+            }
+            return null;
+          }),
+      fallback: 10,
+    );
   }
 
-  return _toDouble(
-    _tryRead(() => controller.inputPanjangRumah) ??
-        _tryRead(() => controller.landLength) ??
-        _tryRead(() => controller.panjangRumah) ??
-        _tryRead(() => controller.panjangLahan) ??
-        _tryRead(() {
-          final dynamic args = Get.arguments;
-          if (args is Map) {
-            return args['inputPanjangRumah'] ??
-                args['landLength'] ??
-                args['panjangRumah'] ??
-                args['panjangLahan'];
-          }
-          return null;
-        }),
-    fallback: 10,
-  );
-}
   dynamic _unwrap(dynamic value) {
     try {
       return value.value;
@@ -804,9 +778,3 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     }
   }
 }
-
-
-
-
-
-

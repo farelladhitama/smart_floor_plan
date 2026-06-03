@@ -1,3 +1,4 @@
+﻿import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -5,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/views/hasil_denah_page.dart';
 

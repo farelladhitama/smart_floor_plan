@@ -95,12 +95,18 @@ class ProfessionalFloorPlanPainter extends CustomPainter {
       final Rect rect = _roomToRect(room, plotRect);
       _drawDoor(canvas, rect, plotRect, room);
     }
-    // Object outdoor bawaan dimatikan karena sekarang memakai asset image overlay.
+
+    for (final RoomModel room in outdoorRooms) {
+      final Rect rect = _roomToRect(room, plotRect);
+      _drawOutdoorObject(canvas, rect, room);
+    }
+
     for (final RoomModel room in indoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
       _drawFurniture(canvas, rect, room);
     }
-for (final RoomModel room in rooms) {
+
+    for (final RoomModel room in rooms) {
       final Rect rect = _roomToRect(room, plotRect);
       _drawCleanLabel(canvas, rect, room);
     }
@@ -1918,8 +1924,6 @@ for (final RoomModel room in rooms) {
     return false;
   }
 }
-
-
 
 
 

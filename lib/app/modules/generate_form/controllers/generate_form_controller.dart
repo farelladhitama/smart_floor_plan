@@ -1,9 +1,9 @@
+﻿import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/core/floorplan/room_recommendation.dart';
 import 'package:smart_floor_plan/app/core/floorplan/smart_floor_plan_engine.dart';
-import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart'
     as hasil_controller;
 import 'package:smart_floor_plan/app/modules/hasil_denah/views/hasil_denah_page.dart'
@@ -11,32 +11,19 @@ import 'package:smart_floor_plan/app/modules/hasil_denah/views/hasil_denah_page.
 
 class GenerateFormController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
+  static const Color orange = Color(0xFFE47B3E);
 
-  final formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   final TextEditingController lebarController = TextEditingController();
   final TextEditingController panjangController = TextEditingController();
 
-  final TextEditingController ruangTambahanController =
-      TextEditingController();
-
-  final TextEditingController lebarRuangTambahanController =
-      TextEditingController(text: '2.5');
-
-  final TextEditingController panjangRuangTambahanController =
-      TextEditingController(text: '2.5');
-
-  final RxInt jumlahKamar = 1.obs;
   final RxString selectedMaterial = 'Batu Bata'.obs;
 
-  final RxString selectedJenisRuang = 'Mushola'.obs;
-
-  final RxList<String> listRuangCustom = <String>[].obs;
+  final RxBool isAnalyzingRecommendation = false.obs;
+  final RxBool hasAnalyzedRecommendation = false.obs;
 
   final RxList<RoomRecommendation> rekomendasiRuang =
-      <RoomRecommendation>[].obs;
-
-  final RxList<RoomRecommendation> ruangTambahanDetail =
       <RoomRecommendation>[].obs;
 
   final List<String> materialOptions = [
@@ -45,42 +32,18 @@ class GenerateFormController extends GetxController {
     'Batako',
   ];
 
-  final List<String> jenisRuangOptions = [
-    'Mushola',
-    'Gudang',
-    'Area Cuci',
-    'Jemuran',
-    'Taman',
-    'Garasi',
-    'Carport',
-    'Ruang Kerja',
-    'Ruang Makan',
-    'Ruang Keluarga',
-    'Kamar Mandi',
-    'Kamar Tidur',
-  ];
-
   @override
   void onInit() {
     super.onInit();
 
-    lebarController.addListener(updateRekomendasiRuang);
-    panjangController.addListener(updateRekomendasiRuang);
-
-    ever(jumlahKamar, (_) {
-      updateRekomendasiRuang();
-    });
+    lebarController.addListener(_clearRecommendationOnInputChange);
+    panjangController.addListener(_clearRecommendationOnInputChange);
   }
 
-  void tambahKamar() {
-    jumlahKamar.value++;
-    updateRekomendasiRuang();
-  }
-
-  void kurangKamar() {
-    if (jumlahKamar.value > 1) {
-      jumlahKamar.value--;
-      updateRekomendasiRuang();
+  void _clearRecommendationOnInputChange() {
+    if (rekomendasiRuang.isNotEmpty || hasAnalyzedRecommendation.value) {
+      rekomendasiRuang.clear();
+      hasAnalyzedRecommendation.value = false;
     }
   }
 
@@ -88,11 +51,28 @@ class GenerateFormController extends GetxController {
     selectedMaterial.value = value;
   }
 
-  void changeJenisRuang(String value) {
-    selectedJenisRuang.value = value;
+  int estimateBedroomCount({
+    required double landWidth,
+    required double landLength,
+  }) {
+    final double area = landWidth * landLength;
+
+    if (area <= 45) {
+      return 1;
+    }
+
+    if (area <= 90) {
+      return 2;
+    }
+
+    if (area <= 140) {
+      return 3;
+    }
+
+    return 4;
   }
 
-  void updateRekomendasiRuang() {
+  Future<void> analisisRekomendasiRuang() async {
     final double? lebarRumah = double.tryParse(lebarController.text.trim());
     final double? panjangRumah = double.tryParse(panjangController.text.trim());
 
@@ -100,99 +80,45 @@ class GenerateFormController extends GetxController {
         panjangRumah == null ||
         lebarRumah <= 0 ||
         panjangRumah <= 0) {
+      _showSnackBar(
+        title: 'Input Belum Lengkap',
+        message: 'Isi lebar dan panjang lahan terlebih dahulu.',
+      );
+      return;
+    }
+
+    if (isAnalyzingRecommendation.value) {
+      return;
+    }
+
+    try {
+      isAnalyzingRecommendation.value = true;
+      hasAnalyzedRecommendation.value = false;
       rekomendasiRuang.clear();
-      return;
-    }
 
-    final result = SmartFloorPlanEngine.getRecommendations(
-      landWidth: lebarRumah,
-      landLength: panjangRumah,
-      bedroomCount: jumlahKamar.value,
-    );
+      _showLoadingDialog();
 
-    rekomendasiRuang.assignAll(result);
-  }
+      await Future.delayed(const Duration(milliseconds: 900));
+      await Future.delayed(const Duration(milliseconds: 700));
 
-  void tambahRuang() {
-    final String namaManual = ruangTambahanController.text.trim();
-    final String namaRuang =
-        namaManual.isEmpty ? selectedJenisRuang.value : namaManual;
-
-    final double? lebarRuang =
-        double.tryParse(lebarRuangTambahanController.text.trim());
-
-    final double? panjangRuang =
-        double.tryParse(panjangRuangTambahanController.text.trim());
-
-    if (namaRuang.trim().isEmpty) {
-      _showSnackBar(
-        title: 'Peringatan',
-        message: 'Nama ruang tambahan tidak boleh kosong.',
+      final int bedroomCount = estimateBedroomCount(
+        landWidth: lebarRumah,
+        landLength: panjangRumah,
       );
-      return;
-    }
 
-    if (lebarRuang == null || panjangRuang == null) {
-      _showSnackBar(
-        title: 'Peringatan',
-        message: 'Ukuran ruang tambahan harus berupa angka.',
+      final List<RoomRecommendation> result =
+          SmartFloorPlanEngine.getRecommendations(
+        landWidth: lebarRumah,
+        landLength: panjangRumah,
+        bedroomCount: bedroomCount,
       );
-      return;
+
+      rekomendasiRuang.assignAll(result);
+      hasAnalyzedRecommendation.value = true;
+    } finally {
+      isAnalyzingRecommendation.value = false;
+      _closeLoadingDialogIfOpen();
     }
-
-    if (lebarRuang <= 0 || panjangRuang <= 0) {
-      _showSnackBar(
-        title: 'Peringatan',
-        message: 'Ukuran ruang tambahan harus lebih dari 0.',
-      );
-      return;
-    }
-
-    final bool isDuplicate = ruangTambahanDetail.any(
-      (item) => item.name.toLowerCase() == namaRuang.toLowerCase(),
-    );
-
-    if (isDuplicate) {
-      _showSnackBar(
-        title: 'Peringatan',
-        message: 'Ruang tambahan "$namaRuang" sudah ditambahkan.',
-      );
-      return;
-    }
-
-    final recommendation = RoomRecommendation(
-      name: namaRuang,
-      category: _getCategoryFromRoomName(namaRuang),
-      width: lebarRuang,
-      height: panjangRuang,
-      selected: true,
-    );
-
-    ruangTambahanDetail.add(recommendation);
-
-    if (!listRuangCustom.contains(namaRuang)) {
-      listRuangCustom.add(namaRuang);
-    }
-
-    ruangTambahanController.clear();
-
-    _showSnackBar(
-      title: 'Berhasil',
-      message: '$namaRuang berhasil ditambahkan.',
-    );
-  }
-
-  void hapusRuang(String ruang) {
-    listRuangCustom.remove(ruang);
-
-    ruangTambahanDetail.removeWhere(
-      (item) => item.name.toLowerCase() == ruang.toLowerCase(),
-    );
-  }
-
-  void hapusRuangDetail(RoomRecommendation room) {
-    ruangTambahanDetail.remove(room);
-    listRuangCustom.remove(room.name);
   }
 
   void prosesGenerate() {
@@ -203,11 +129,16 @@ class GenerateFormController extends GetxController {
     final double lebarRumah = double.parse(lebarController.text.trim());
     final double panjangRumah = double.parse(panjangController.text.trim());
 
+    final int bedroomCount = estimateBedroomCount(
+      landWidth: lebarRumah,
+      landLength: panjangRumah,
+    );
+
     final SmartFloorPlanResult result = SmartFloorPlanEngine.generate(
       landWidth: lebarRumah,
       landLength: panjangRumah,
-      bedroomCount: jumlahKamar.value,
-      extraRooms: ruangTambahanDetail.toList(),
+      bedroomCount: bedroomCount,
+      extraRooms: const <RoomRecommendation>[],
     );
 
     final List<RoomModel> generatedRooms = result.rooms;
@@ -216,7 +147,7 @@ class GenerateFormController extends GetxController {
       _showSnackBar(
         title: 'Gagal Generate',
         message:
-            'Denah belum dapat dibuat. Coba perbesar ukuran lahan atau kurangi ruang tambahan.',
+            'Denah belum dapat dibuat. Coba perbesar ukuran lahan atau ubah dimensi.',
       );
       return;
     }
@@ -233,57 +164,88 @@ class GenerateFormController extends GetxController {
         inputLebarRumah: result.landWidth,
         inputPanjangRumah: result.landLength,
         material: selectedMaterial.value,
-        jumlahKamar: jumlahKamar.value,
-        ruangTambahan: ruangTambahanDetail.map((item) => item.name).toList(),
+        jumlahKamar: bedroomCount,
+        ruangTambahan: const [],
       ),
     );
   }
 
-  String _getCategoryFromRoomName(String roomName) {
-    final String name = roomName.toLowerCase();
+  void updateRekomendasiRuang() {
+    analisisRekomendasiRuang();
+  }
 
-    if (name.contains('tidur') || name.contains('kamar')) {
-      if (name.contains('mandi') || name.contains('wc')) {
-        return 'bath';
-      }
-
-      return 'bedroom';
+  void _showLoadingDialog() {
+    if (Get.isDialogOpen == true) {
+      return;
     }
 
-    if (name.contains('mandi') || name.contains('wc')) {
-      return 'bath';
-    }
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 34),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: orange.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.architecture_rounded,
+                  color: orange,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Menganalisis Kebutuhan Ruang',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: navy,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sistem sedang menyusun rekomendasi ruang berdasarkan ukuran lahan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 13,
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 22),
+              const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  color: orange,
+                  strokeWidth: 3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
 
-    if (name.contains('dapur')) {
-      return 'kitchen';
+  void _closeLoadingDialogIfOpen() {
+    if (Get.isDialogOpen == true) {
+      Get.back();
     }
-
-    if (name.contains('makan')) {
-      return 'dining';
-    }
-
-    if (name.contains('keluarga')) {
-      return 'family';
-    }
-
-    if (name.contains('tamu')) {
-      return 'living';
-    }
-
-    if (name.contains('taman') ||
-        name.contains('teras') ||
-        name.contains('garasi') ||
-        name.contains('carport')) {
-      return 'outdoor';
-    }
-
-    if (name.contains('cuci') ||
-        name.contains('jemur') ||
-        name.contains('gudang')) {
-      return 'service';
-    }
-
-    return 'room';
   }
 
   void _showSnackBar({
@@ -307,14 +269,14 @@ class GenerateFormController extends GetxController {
       return 'Isi angka';
     }
 
-    final number = double.tryParse(value.trim());
+    final double? number = double.tryParse(value.trim());
 
     if (number == null) {
       return 'Harus angka';
     }
 
     if (number <= 0) {
-      return 'Minimal > 0';
+      return 'Minimal lebih dari 0';
     }
 
     return null;
@@ -322,14 +284,13 @@ class GenerateFormController extends GetxController {
 
   @override
   void onClose() {
-    lebarController.removeListener(updateRekomendasiRuang);
-    panjangController.removeListener(updateRekomendasiRuang);
+    _closeLoadingDialogIfOpen();
+
+    lebarController.removeListener(_clearRecommendationOnInputChange);
+    panjangController.removeListener(_clearRecommendationOnInputChange);
 
     lebarController.dispose();
     panjangController.dispose();
-    ruangTambahanController.dispose();
-    lebarRuangTambahanController.dispose();
-    panjangRuangTambahanController.dispose();
 
     super.onClose();
   }
