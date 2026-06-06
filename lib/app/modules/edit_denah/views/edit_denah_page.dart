@@ -1,4 +1,5 @@
-﻿import 'package:smart_floor_plan/app/data/models/room_model.dart';
+﻿import 'package:smart_floor_plan/app/routes/app_routes.dart';
+import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -146,6 +147,29 @@ class _EditDenahPageState extends State<EditDenahPage> {
 
     return Scaffold(
       backgroundColor: bg,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 86),
+        child: FloatingActionButton.extended(
+          heroTag: 'rab_edit_denah',
+          backgroundColor: const Color(0xFFE47B3E),
+          foregroundColor: Colors.white,
+          elevation: 8,
+          onPressed: () {
+            Get.toNamed(
+              AppRoutes.rab,
+              arguments: Get.arguments,
+            );
+          },
+          icon: const Icon(Icons.receipt_long_rounded),
+          label: const Text(
+            'LIHAT RAB',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: Column(
           children: [
@@ -1147,6 +1171,7 @@ class _EditSelectionPainter extends CustomPainter {
         oldDelegate.landLength != landLength;
   }
 }
+
 
 
 

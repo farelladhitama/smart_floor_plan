@@ -160,6 +160,29 @@ class RiwayatController extends GetxController {
               SizedBox(
                 width: double.infinity,
                 height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => openRab(item),
+                  icon: const Icon(Icons.receipt_long_rounded),
+                  label: const Text(
+                    'LIHAT RAB',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: orange,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: () => Get.back(),
                   style: ElevatedButton.styleFrom(
@@ -183,6 +206,32 @@ class RiwayatController extends GetxController {
         ),
       ),
       isScrollControlled: true,
+    );
+  }
+  void openRab(Map<String, dynamic> item) {
+    final double totalLuas = _toDouble(item['total_luas']);
+    final double lebarLahan = _toDouble(item['lebar_lahan']);
+    final double panjangLahan = _toDouble(item['panjang_lahan']);
+
+    double luasBangunan = totalLuas;
+
+    if (luasBangunan <= 0 && lebarLahan > 0 && panjangLahan > 0) {
+      luasBangunan = lebarLahan * panjangLahan;
+    }
+
+    Get.back();
+
+    Get.toNamed(
+      AppRoutes.rab,
+      arguments: {
+        'floorPlanId': (item['id'] ?? '').toString(),
+        'luasBangunan': luasBangunan,
+        'totalLuas': luasBangunan,
+        'inputLebarRumah': lebarLahan,
+        'inputPanjangRumah': panjangLahan,
+        'material': (item['material'] ?? '').toString(),
+        'rooms': item['rooms_json'],
+      },
     );
   }
 
@@ -400,3 +449,4 @@ class RiwayatController extends GetxController {
     );
   }
 }
+

@@ -1,3 +1,8 @@
+﻿import 'package:smart_floor_plan/app/modules/rab/views/rab_page.dart';
+import 'package:smart_floor_plan/app/modules/rab/bindings/rab_binding.dart';
+import 'package:smart_floor_plan/app/modules/forgot_password/bindings/forgot_password_binding.dart';
+import 'package:smart_floor_plan/app/modules/reset_password/views/reset_password_page.dart';
+import 'package:smart_floor_plan/app/modules/forgot_password/views/forgot_password_page.dart';
 import 'package:get/get.dart';
 
 import 'app_routes.dart';
@@ -29,9 +34,31 @@ import '../modules/scan_denah/views/scan_denah_page.dart';
 import '../modules/scan_denah/bindings/scan_denah_binding.dart';
 
 class AppPages {
-  static const initial = AppRoutes.splash;
+    static String get initial {
+    final String url = Uri.base.toString();
+
+    if (url.contains('type=recovery') ||
+        url.contains('access_token') ||
+        url.contains('refresh_token') ||
+        url.contains('token_hash') ||
+        url.contains('code=')) {
+      return AppRoutes.resetPassword;
+    }
+
+    return AppRoutes.splash;
+  }
 
   static final routes = [
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordPage(),
+      binding: ForgotPasswordBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.resetPassword,
+      page: () => const ResetPasswordPage(),
+    ),
+
     GetPage(
       name: AppRoutes.splash,
       page: () => CinematicSplashScreen(),
@@ -75,5 +102,14 @@ class AppPages {
       page: () => const ScanDenahPage(),
       binding: ScanDenahBinding(),
     ),
+    GetPage(
+      name: AppRoutes.rab,
+      page: () => const RabPage(),
+      binding: RabBinding(),
+    ),
   ];
 }
+
+
+
+

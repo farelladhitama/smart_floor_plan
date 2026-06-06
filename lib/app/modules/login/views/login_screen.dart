@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
@@ -256,7 +256,9 @@ class _LoginCard extends StatelessWidget {
               child: TextButton(
                 onPressed: controller.isLoading.value
                     ? null
-                    : controller.forgotPasswordComingSoon,
+                    : () {
+                        Get.toNamed(AppRoutes.forgotPassword);
+                      },
                 child: const Text(
                   'Lupa password?',
                   style: TextStyle(
@@ -568,3 +570,7 @@ class _SubmitButton extends StatelessWidget {
     );
   }
 }
+
+
+
+

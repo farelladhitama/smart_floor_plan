@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -230,14 +230,14 @@ class HasilDenahController extends GetxController {
   }
 
   void lihatRAB() {
-    if (Get.isRegistered<RABController>()) {
-      Get.delete<RABController>();
+    if (Get.isRegistered<RabController>()) {
+      Get.delete<RabController>();
     }
 
-    Get.put(RABController());
+    Get.put(RabController());
 
     Get.to(
-      () => RABPage(
+      () => RabPage(
         rooms: currentRooms.map((room) => room.copyWith()).toList(),
       ),
     );
@@ -271,8 +271,8 @@ class HasilDenahController extends GetxController {
       Get.delete<EditDenahController>();
     }
 
-    if (Get.isRegistered<RABController>()) {
-      Get.delete<RABController>();
+    if (Get.isRegistered<RabController>()) {
+      Get.delete<RabController>();
     }
 
     super.onClose();
