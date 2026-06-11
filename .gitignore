@@ -67,3 +67,8 @@ backend_smartfloorplan/venv/
 !.env.example
 !**/.env.example
 *.bak
+
+# Temporary patch files
+*.bak
+fix_*.py
+patch_*.py
