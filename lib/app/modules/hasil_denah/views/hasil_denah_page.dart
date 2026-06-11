@@ -1,115 +1,156 @@
+﻿import 'package:smart_floor_plan/app/routes/app_routes.dart';
+import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:smart_floor_plan/app/data/models/room_model.dart';
+import 'package:smart_floor_plan/app/modules/edit_denah/views/edit_denah_page.dart';
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart';
+import 'package:smart_floor_plan/app/widgets/floor_plan_asset_overlay.dart';
+import 'package:smart_floor_plan/app/widgets/professional_floor_plan_painter.dart';
 
-class HasilDenahPage extends GetView<HasilDenahController> {
+class HasilDenahPage extends StatefulWidget {
   final List<RoomModel> rooms;
-  final double inputPanjangRumah;
-  final double inputLebarRumah;
+  final dynamic inputLebarRumah;
+  final dynamic inputPanjangRumah;
+  final dynamic floorPlanId;
+  final dynamic material;
+  final dynamic jumlahKamar;
+  final dynamic ruangTambahan;
 
   const HasilDenahPage({
     super.key,
-    required this.rooms,
-    required this.inputPanjangRumah,
-    required this.inputLebarRumah,
+    this.rooms = const [],
+    this.inputLebarRumah,
+    this.inputPanjangRumah,
+    this.floorPlanId,
+    this.material,
+    this.jumlahKamar,
+    this.ruangTambahan,
   });
 
+  @override
+  State<HasilDenahPage> createState() => _HasilDenahPageState();
+}
+
+class _HasilDenahPageState extends State<HasilDenahPage> {
   static const Color navy = Color(0xFF0D1B2A);
-  static const Color navyLight = Color(0xFF1B263B);
   static const Color orange = Color(0xFFE47B3E);
-  static const Color background = Color(0xFFF5F7FA);
+  static const Color bg = Color(0xFFF5F7FA);
+  static const Color textDark = Color(0xFF102033);
+  static const Color textSoft = Color(0xFF6B7A90);
 
   @override
   Widget build(BuildContext context) {
-    controller.setInitialRooms(rooms);
+    return GetBuilder<HasilDenahController>(
+      builder: (controller) {
+        final List<RoomModel> rooms = _getRooms(controller);
+        final double landWidth = _getLandWidth(controller);
+        final double landLength = _getLandLength(controller);
 
-    return Scaffold(
-      backgroundColor: background,
-      appBar: AppBar(
-        title: const Text(
-          'Hasil Denah',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: navy,
-        elevation: 0,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final bool isMobile = constraints.maxWidth < 700;
-
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 900,
-                ),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    isMobile ? 16 : 24,
-                    20,
-                    isMobile ? 16 : 24,
-                    120,
-                  ),
-                  child: isMobile
-                      ? Column(
-                          children: [
-                            _buildHeaderCard(),
-                            const SizedBox(height: 18),
-                            _buildCanvasCard(),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 300,
-                              child: _buildHeaderCard(),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildCanvasCard(),
-                            ),
-                          ],
-                        ),
-                ),
+        return Scaffold(
+          backgroundColor: bg,
+          appBar: AppBar(
+            backgroundColor: navy,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              onPressed: () => Get.back(),
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
               ),
+            ),
+            title: const Text(
+              'Hasil Denah',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 86),
+        child: FloatingActionButton.extended(
+          heroTag: 'rab_hasil_denah',
+          backgroundColor: const Color(0xFFE47B3E),
+          foregroundColor: Colors.white,
+          elevation: 8,
+          onPressed: () {
+            Get.toNamed(
+              AppRoutes.rab,
+              arguments: Get.arguments,
             );
           },
+          icon: const Icon(Icons.receipt_long_rounded),
+          label: const Text(
+            'LIHAT RAB',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
-      bottomNavigationBar: _buildBottomAction(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPreviewCard(
+                          rooms: rooms,
+                          landWidth: landWidth,
+                          landLength: landLength,
+                        ),
+                        const SizedBox(height: 18),
+                        _buildRoomSummary(
+                          rooms: rooms,
+                          landWidth: landWidth,
+                          landLength: landLength,
+                        ),
+                        const SizedBox(height: 92),
+                      ],
+                    ),
+                  ),
+                ),
+                _buildBottomAction(
+                  controller: controller,
+                  rooms: rooms,
+                  landWidth: landWidth,
+                  landLength: landLength,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeaderCard() {
+  Widget _buildPreviewCard({
+    required List<RoomModel> rooms,
+    required double landWidth,
+    required double landLength,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            navy,
-            navyLight,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: const Color(0xFFE3E9F0),
+          width: 1,
         ),
-        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.18),
-            blurRadius: 24,
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 28,
             offset: const Offset(0, 12),
           ),
         ],
@@ -117,163 +158,60 @@ class HasilDenahPage extends GetView<HasilDenahController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeaderIcon(),
-          const SizedBox(height: 18),
-          const Text(
-            'Denah Rumah 2D',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Hasil generate denah berdasarkan ukuran lahan dan kebutuhan ruangan Anda.',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.72),
-              fontSize: 13.5,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoTile(
-                  title: 'Lebar',
-                  value: '${inputLebarRumah.toStringAsFixed(1)} m',
-                  icon: Icons.straighten_rounded,
+          _buildPreviewHeader(),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: double.infinity,
+              height: 560,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                border: Border.all(
+                  color: const Color(0xFFDDE6EF),
                 ),
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildInfoTile(
-                  title: 'Panjang',
-                  value: '${inputPanjangRumah.toStringAsFixed(1)} m',
-                  icon: Icons.square_foot_rounded,
-                ),
-              ),
-            ],
+              child: rooms.isEmpty
+                  ? _buildEmptyPreview()
+                  : InteractiveViewer(
+                      minScale: 0.75,
+                      maxScale: 3.2,
+                      boundaryMargin: const EdgeInsets.all(80),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: ProfessionalFloorPlanPainter(
+                                rooms: rooms,
+                                inputLebarRumah: landWidth,
+                                inputPanjangRumah: landLength,
+                                title: 'SMARTFLOORPLAN RENDER',
+                              ),
+                            ),
+                          ),
+
+                          // Overlay asset realistis: bed, sofa, toilet, car, tree, dll.
+                          Positioned.fill(
+                            child: FloorPlanAssetOverlay(
+                              rooms: rooms,
+                              landWidth: landWidth,
+                              landLength: landLength,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
           ),
           const SizedBox(height: 12),
-          Obx(
-            () => _buildInfoTile(
-              title: 'Jumlah Ruang',
-              value: '${controller.currentRooms.length} ruang',
-              icon: Icons.meeting_room_rounded,
-              fullWidth: true,
-            ),
-          ),
-          const SizedBox(height: 18),
-          _buildHintBox(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderIcon() {
-    return Container(
-      width: 62,
-      height: 62,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: const Icon(
-        Icons.map_rounded,
-        color: orange,
-        size: 36,
-      ),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required String title,
-    required String value,
-    required IconData icon,
-    bool fullWidth = false,
-  }) {
-    return Container(
-      width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.09),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.10),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: orange,
-            size: 22,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHintBox() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: orange.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: orange.withOpacity(0.20),
-        ),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.tips_and_updates_rounded,
-            color: orange,
-            size: 22,
-          ),
-          SizedBox(width: 10),
-          Expanded(
+          const Center(
             child: Text(
-              'Tekan Edit untuk menggeser atau mengubah ukuran ruangan. Setelah selesai, simpan denah untuk melihat RAB.',
+              'Cubit atau scroll untuk zoom  |  geser untuk melihat detail',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.5,
-                height: 1.45,
+                fontSize: 12,
+                color: textSoft,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -283,408 +221,685 @@ class HasilDenahPage extends GetView<HasilDenahController> {
     );
   }
 
-  Widget _buildCanvasCard() {
-    final double lebarVisual = inputLebarRumah * controller.skala;
-    final double panjangVisual = inputPanjangRumah * controller.skala;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: navy.withOpacity(0.06),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
+  Widget _buildPreviewHeader() {
+    return Row(
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
-                child: Text(
-                  'Preview Denah',
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
+              Text(
+                'Preview Arsitektural',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: textDark,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: orange.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Blueprint',
-                  style: TextStyle(
-                    color: orange,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                  ),
+              SizedBox(height: 4),
+              Text(
+                'Denah rendered dengan furniture, taman, pintu, dan material',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: textSoft,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(
-                minHeight: 360,
-                maxHeight: 520,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF3F6),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                ),
-              ),
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 2.5,
-                boundaryMargin: const EdgeInsets.all(80),
-                child: Center(
-                  child: Container(
-                    width: lebarVisual + 90,
-                    height: panjangVisual + 90,
-                    alignment: Alignment.center,
-                    child: Obx(
-                      () => CustomPaint(
-                        size: Size(lebarVisual, panjangVisual),
-                        painter: DenahProfessionalPainter(
-                          rooms: controller.currentRooms.toList(),
-                          skala: controller.skala,
-                          lebarRumah: inputLebarRumah,
-                          panjangRumah: inputPanjangRumah,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFEFE6),
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomAction() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
-        decoration: BoxDecoration(
-          color: background,
-          boxShadow: [
-            BoxShadow(
-              color: navy.withOpacity(0.08),
-              blurRadius: 18,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 1,
-              child: _bottomButton(
-                label: 'EDIT',
-                icon: Icons.edit_location_alt_rounded,
-                color: navy,
-                onTap: controller.editDenah,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: Obx(
-                () => !controller.isSaved.value
-                    ? _bottomButton(
-                        label: 'SIMPAN DENAH',
-                        icon: Icons.save_rounded,
-                        color: orange,
-                        onTap: controller.simpanDenah,
-                      )
-                    : _bottomButton(
-                        label: 'LIHAT RAB',
-                        icon: Icons.receipt_long_rounded,
-                        color: Colors.green.shade700,
-                        onTap: controller.lihatRAB,
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _bottomButton({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      height: 56,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(
-          icon,
-          color: Colors.white,
-          size: 21,
-        ),
-        label: Text(
-          label,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13.5,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          elevation: 5,
-          shadowColor: color.withOpacity(0.26),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DenahProfessionalPainter extends CustomPainter {
-  final List<RoomModel> rooms;
-  final double skala;
-  final double lebarRumah;
-  final double panjangRumah;
-
-  DenahProfessionalPainter({
-    required this.rooms,
-    required this.skala,
-    required this.lebarRumah,
-    required this.panjangRumah,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final backgroundPaint = Paint()
-      ..color = const Color(0xFFEFF3F6)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      backgroundPaint,
-    );
-
-    final gridPaint = Paint()
-      ..color = Colors.blueGrey.withOpacity(0.16)
-      ..strokeWidth = 0.6;
-
-    final largeGridPaint = Paint()
-      ..color = Colors.blueGrey.withOpacity(0.25)
-      ..strokeWidth = 1.0;
-
-    for (double i = -40; i <= size.width + 40; i += 10) {
-      canvas.drawLine(
-        Offset(i, -40),
-        Offset(i, size.height + 40),
-        i % 50 == 0 ? largeGridPaint : gridPaint,
-      );
-    }
-
-    for (double i = -40; i <= size.height + 40; i += 10) {
-      canvas.drawLine(
-        Offset(-40, i),
-        Offset(size.width + 40, i),
-        i % 50 == 0 ? largeGridPaint : gridPaint,
-      );
-    }
-
-    final outerWallPaint = Paint()
-      ..color = const Color(0xFF0D1B2A)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      outerWallPaint,
-    );
-
-    _drawDimension(
-      canvas,
-      const Offset(0, -25),
-      Offset(size.width, -25),
-      '${lebarRumah.toStringAsFixed(1)}m',
-      Colors.blueGrey.shade800,
-    );
-
-    _drawDimension(
-      canvas,
-      const Offset(-25, 0),
-      Offset(-25, size.height),
-      '${panjangRumah.toStringAsFixed(1)}m',
-      Colors.blueGrey.shade800,
-      isVertical: true,
-    );
-
-    for (final room in rooms) {
-      final roomRect = Rect.fromLTWH(
-        room.x,
-        room.y,
-        room.width,
-        room.height,
-      );
-
-      final roomPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(roomRect, const Radius.circular(4)),
-        roomPaint,
-      );
-
-      final wallPaint = Paint()
-        ..color = const Color(0xFF0D1B2A).withOpacity(0.86)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(roomRect, const Radius.circular(4)),
-        wallPaint,
-      );
-
-      final double luas = (room.width / skala) * (room.height / skala);
-
-      _drawRoomInfo(
-        canvas,
-        roomRect,
-        room.nama,
-        luas,
-      );
-
-      _drawDimension(
-        canvas,
-        Offset(room.x, room.y + 13),
-        Offset(room.x + room.width, room.y + 13),
-        '${(room.width / skala).toStringAsFixed(1)}m',
-        Colors.red.shade800,
-        fontSize: 9,
-      );
-
-      _drawDimension(
-        canvas,
-        Offset(room.x + 13, room.y),
-        Offset(room.x + 13, room.y + room.height),
-        '${(room.height / skala).toStringAsFixed(1)}m',
-        Colors.red.shade800,
-        isVertical: true,
-        fontSize: 9,
-      );
-    }
-  }
-
-  void _drawDimension(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    String text,
-    Color color, {
-    bool isVertical = false,
-    double fontSize = 11,
-  }) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.0;
-
-    canvas.drawLine(start, end, paint);
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    final Offset textPos = isVertical
-        ? Offset(
-            start.dx - textPainter.width - 5,
-            (start.dy + end.dy) / 2 - (textPainter.height / 2),
-          )
-        : Offset(
-            (start.dx + end.dx) / 2 - (textPainter.width / 2),
-            start.dy - textPainter.height - 2,
-          );
-
-    textPainter.paint(canvas, textPos);
-  }
-
-  void _drawRoomInfo(
-    Canvas canvas,
-    Rect rect,
-    String name,
-    double area,
-  ) {
-    final textPainter = TextPainter(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: '$name\n',
-            style: const TextStyle(
-              color: Color(0xFF0D1B2A),
+          child: const Text(
+            'SMART PLAN',
+            style: TextStyle(
+              color: orange,
               fontWeight: FontWeight.w900,
               fontSize: 11,
             ),
           ),
-          TextSpan(
-            text: '${area.toStringAsFixed(1)} m²',
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontSize: 9,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyPreview() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.home_work_outlined,
+              size: 54,
+              color: textSoft,
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Data ruangan belum tersedia',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: textDark,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Silakan generate denah terlebih dahulu.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: textSoft,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoomSummary({
+    required List<RoomModel> rooms,
+    required double landWidth,
+    required double landLength,
+  }) {
+    final double landArea = landWidth * landLength;
+
+    final double buildingArea = rooms.fold<double>(
+      0,
+      (total, room) {
+        if (_isOutdoorRoom(room)) return total;
+        return total + (room.width * room.height);
+      },
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Legenda Ruang',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: textDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _infoBox(
+                icon: Icons.meeting_room_rounded,
+                label: '${rooms.length} Ruang',
+                subtitle: 'Total ruang',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _infoBox(
+                icon: Icons.square_foot_rounded,
+                label: '${landArea.toStringAsFixed(1)} m2',
+                subtitle: 'Luas lahan',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _infoBox(
+                icon: Icons.home_rounded,
+                label: '${buildingArea.toStringAsFixed(1)} m2',
+                subtitle: 'Luas ruang',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: const Color(0xFFE3E9F0),
+            ),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < rooms.length; i++)
+                _roomRow(
+                  room: rooms[i],
+                  isLast: i == rooms.length - 1,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _infoBox({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFE3E9F0),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: orange,
+            size: 22,
+          ),
+          const SizedBox(height: 7),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: textDark,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: textSoft,
+              fontSize: 10.8,
               fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: rect.width - 8);
+    );
+  }
 
-    textPainter.paint(
-      canvas,
-      Offset(
-        rect.center.dx - (textPainter.width / 2),
-        rect.center.dy - (textPainter.height / 2),
+  Widget _roomRow({
+    required RoomModel room,
+    required bool isLast,
+  }) {
+    final double area = room.width * room.height;
+
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: isLast ? 0 : 10,
+        top: isLast ? 0 : 0,
+      ),
+      margin: EdgeInsets.only(
+        bottom: isLast ? 0 : 10,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isLast ? Colors.transparent : const Color(0xFFE8EDF3),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF0E8),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              _roomIcon(room),
+              color: orange,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              room.nama,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: textDark,
+              ),
+            ),
+          ),
+          Text(
+            '${area.toStringAsFixed(1)} m2',
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: textSoft,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  IconData _roomIcon(RoomModel room) {
+    final String name = room.nama.toLowerCase();
+    final String category = room.category.toLowerCase();
+
+    if (name.contains('tidur') || category == 'bedroom') {
+      return Icons.bed_rounded;
+    }
+
+    if (name.contains('mandi') || name.contains('wc') || name.contains('km')) {
+      return Icons.bathtub_rounded;
+    }
+
+    if (name.contains('dapur')) return Icons.kitchen_rounded;
+    if (name.contains('makan')) return Icons.dining_rounded;
+    if (name.contains('carport')) return Icons.directions_car_rounded;
+    if (name.contains('taman') || name.contains('inner court')) {
+      return Icons.park_rounded;
+    }
+
+    return Icons.meeting_room_rounded;
+  }
+
+  Widget _buildBottomAction({
+    required HasilDenahController controller,
+    required List<RoomModel> rooms,
+    required double landWidth,
+    required double landLength,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 58,
+              child: ElevatedButton.icon(
+                onPressed: rooms.isEmpty
+                    ? null
+                    : () async {
+                        final dynamic result = await Get.to(
+                          () => EditDenahPage(
+                            initialRooms: rooms,
+                            inputLebarRumah: landWidth,
+                            inputPanjangRumah: landLength,
+                          ),
+                        );
+
+                        if (result is List<RoomModel> && result.isNotEmpty) {
+                          _replaceControllerRooms(controller, result);
+
+                          Get.snackbar(
+                            'Berhasil',
+                            'Hasil edit denah berhasil diterapkan.',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: navy,
+                            colorText: Colors.white,
+                            margin: const EdgeInsets.all(16),
+                            borderRadius: 16,
+                            duration: const Duration(seconds: 2),
+                          );
+                        }
+                      },
+                icon: const Icon(Icons.edit_rounded, size: 20),
+                label: const Text(
+                  'EDIT',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: navy,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 58,
+              child: ElevatedButton.icon(
+                onPressed: rooms.isEmpty
+                    ? null
+                    : () async {
+                        await _callSave(controller);
+                      },
+                icon: const Icon(Icons.save_rounded, size: 20),
+                label: const Text(
+                  'SIMPAN DENAH',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: orange,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isOutdoorRoom(RoomModel room) {
+    final String name = room.nama.toLowerCase();
+    final String category = room.category.toLowerCase();
+
+    return category == 'outdoor' ||
+        name.contains('taman') ||
+        name.contains('carport') ||
+        name.contains('teras') ||
+        name.contains('inner court') ||
+        name.contains('halaman');
+  }
+
+  List<RoomModel> _getRooms(dynamic controller) {
+    final dynamic raw = _readRawRooms(controller);
+    final dynamic value = _unwrap(raw);
+
+    if (value is List<RoomModel>) {
+      return value;
+    }
+
+    if (value is Iterable) {
+      try {
+        return value.cast<RoomModel>().toList();
+      } catch (_) {
+        return <RoomModel>[];
+      }
+    }
+
+    return <RoomModel>[];
+  }
+
+  dynamic _readRawRooms(dynamic controller) {
+  if (widget.rooms.isNotEmpty) {
+    return widget.rooms;
+  }
+
+  return _tryRead(() => controller.rooms) ??
+      _tryRead(() => controller.roomList) ??
+      _tryRead(() => controller.generatedRooms) ??
+      _tryRead(() => controller.hasilRooms) ??
+      _tryRead(() => controller.denahRooms) ??
+      _tryRead(() {
+        final dynamic args = Get.arguments;
+        if (args is Map) return args['rooms'];
+        return null;
+      });
 }
+  double _getLandWidth(dynamic controller) {
+  if (widget.inputLebarRumah != null) {
+    return _toDouble(widget.inputLebarRumah, fallback: 8);
+  }
+
+  return _toDouble(
+    _tryRead(() => controller.inputLebarRumah) ??
+        _tryRead(() => controller.landWidth) ??
+        _tryRead(() => controller.lebarRumah) ??
+        _tryRead(() => controller.lebarLahan) ??
+        _tryRead(() {
+          final dynamic args = Get.arguments;
+          if (args is Map) {
+            return args['inputLebarRumah'] ??
+                args['landWidth'] ??
+                args['lebarRumah'] ??
+                args['lebarLahan'];
+          }
+          return null;
+        }),
+    fallback: 8,
+  );
+}
+  double _getLandLength(dynamic controller) {
+  if (widget.inputPanjangRumah != null) {
+    return _toDouble(widget.inputPanjangRumah, fallback: 10);
+  }
+
+  return _toDouble(
+    _tryRead(() => controller.inputPanjangRumah) ??
+        _tryRead(() => controller.landLength) ??
+        _tryRead(() => controller.panjangRumah) ??
+        _tryRead(() => controller.panjangLahan) ??
+        _tryRead(() {
+          final dynamic args = Get.arguments;
+          if (args is Map) {
+            return args['inputPanjangRumah'] ??
+                args['landLength'] ??
+                args['panjangRumah'] ??
+                args['panjangLahan'];
+          }
+          return null;
+        }),
+    fallback: 10,
+  );
+}
+  dynamic _unwrap(dynamic value) {
+    try {
+      return value.value;
+    } catch (_) {
+      return value;
+    }
+  }
+
+  dynamic _tryRead(dynamic Function() reader) {
+    try {
+      return reader();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  double _toDouble(dynamic value, {required double fallback}) {
+    final dynamic unwrapped = _unwrap(value);
+
+    if (unwrapped is num) {
+      return unwrapped.toDouble();
+    }
+
+    if (unwrapped is String) {
+      return double.tryParse(unwrapped) ?? fallback;
+    }
+
+    return fallback;
+  }
+
+  bool _replaceControllerRooms(dynamic controller, List<RoomModel> editedRooms) {
+    final dynamic raw = _readRawRooms(controller);
+
+    try {
+      raw.assignAll(editedRooms);
+      _refreshController(controller);
+      return true;
+    } catch (_) {}
+
+    try {
+      raw.clear();
+      raw.addAll(editedRooms);
+      _refreshController(controller);
+      return true;
+    } catch (_) {}
+
+    try {
+      raw.value = editedRooms;
+      _refreshController(controller);
+      return true;
+    } catch (_) {}
+
+    try {
+      controller.rooms = editedRooms;
+      _refreshController(controller);
+      return true;
+    } catch (_) {}
+
+    return false;
+  }
+
+  void _refreshController(dynamic controller) {
+    try {
+      controller.update();
+    } catch (_) {}
+
+    try {
+      controller.rooms.refresh();
+    } catch (_) {}
+  }
+  Future<void> _callSave(dynamic controller) async {
+    final List<RoomModel> saveRooms = _getRooms(controller);
+    final double saveLandWidth = _getLandWidth(controller);
+    final double saveLandLength = _getLandLength(controller);
+
+    if (saveRooms.isEmpty) {
+      Get.snackbar(
+        'Gagal Simpan',
+        'Tidak ada data ruangan yang dapat disimpan.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 16,
+        duration: const Duration(seconds: 3),
+      );
+      return;
+    }
+
+    int safeInt(dynamic value, int fallback) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? fallback;
+      return fallback;
+    }
+
+    final String? saveFloorPlanId =
+        widget.floorPlanId == null ? null : widget.floorPlanId.toString();
+
+    final String saveMaterial =
+        widget.material == null ? 'Batu Bata' : widget.material.toString();
+
+    final int saveJumlahKamar = safeInt(widget.jumlahKamar, 1);
+
+    final List<String> saveRuangTambahan = widget.ruangTambahan is List
+        ? (widget.ruangTambahan as List).map((item) => item.toString()).toList()
+        : <String>[];
+
+    try {
+      controller.resetRooms(saveRooms);
+    } catch (_) {
+      try {
+        controller.currentRooms.assignAll(saveRooms);
+      } catch (_) {}
+    }
+
+    try {
+      controller.setMetadata(
+        inputFloorPlanId: saveFloorPlanId,
+        inputLebarRumah: saveLandWidth,
+        inputPanjangRumah: saveLandLength,
+        inputJumlahKamar: saveJumlahKamar,
+        inputMaterial: saveMaterial,
+        inputRuangTambahan: saveRuangTambahan,
+      );
+    } catch (_) {
+      try {
+        controller.floorPlanId = saveFloorPlanId;
+      } catch (_) {}
+
+      try {
+        controller.landWidth = saveLandWidth;
+      } catch (_) {}
+
+      try {
+        controller.landLength = saveLandLength;
+      } catch (_) {}
+
+      try {
+        controller.jumlahKamar = saveJumlahKamar;
+      } catch (_) {}
+
+      try {
+        controller.material = saveMaterial;
+      } catch (_) {}
+
+      try {
+        controller.ruangTambahan = saveRuangTambahan;
+      } catch (_) {}
+    }
+
+    try {
+      controller.update();
+    } catch (_) {}
+
+    try {
+      await controller.simpanDenah();
+    } catch (error) {
+      Get.snackbar(
+        'Gagal Simpan',
+        'Terjadi kesalahan: $error',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 16,
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
+
+  Future<bool> _tryCallAsync(dynamic Function() caller) async {
+    try {
+      final dynamic result = caller();
+
+      if (result is Future) {
+        await result;
+      }
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+
+
+
+
+
+
+
+

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
 import 'package:smart_floor_plan/app/modules/riwayat/views/riwayat_page.dart';
+import 'package:smart_floor_plan/app/modules/profile/controllers/profile_controller.dart';
+
 import '../controllers/dashboard_controller.dart';
 
 class DashboardPage extends GetView<DashboardController> {
@@ -12,6 +14,14 @@ class DashboardPage extends GetView<DashboardController> {
   static const Color orange = Color(0xFFE47B3E);
   static const Color background = Color(0xFFF5F7FA);
   static const Color softGrey = Color(0xFFEDEFF3);
+
+  ProfileController get profileController {
+    if (Get.isRegistered<ProfileController>()) {
+      return Get.find<ProfileController>();
+    }
+
+    return Get.put(ProfileController());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,25 +119,36 @@ class DashboardPage extends GetView<DashboardController> {
         ),
         GestureDetector(
           onTap: () => controller.changeTab(2),
-          child: Container(
-            width: isMobile ? 50 : 54,
-            height: isMobile ? 50 : 54,
-            decoration: BoxDecoration(
-              color: navy,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: navy.withOpacity(0.22),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+          child: Obx(
+            () {
+              final profile = profileController;
+
+              return Container(
+                width: isMobile ? 50 : 54,
+                height: isMobile ? 50 : 54,
+                decoration: BoxDecoration(
+                  color: navy,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: navy.withOpacity(0.22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              color: Colors.white,
-              size: isMobile ? 26 : 28,
-            ),
+                child: Center(
+                  child: Text(
+                    profile.initialName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 22 : 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -311,6 +332,8 @@ class DashboardPage extends GetView<DashboardController> {
   }
 
   Widget _buildProfilePage() {
+    final ProfileController profile = profileController;
+
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -321,143 +344,173 @@ class DashboardPage extends GetView<DashboardController> {
           return Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxWidth),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 24,
-                  isMobile ? 18 : 24,
-                  isMobile ? 16 : 24,
-                  110,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Profil',
-                      style: TextStyle(
-                        color: navy,
-                        fontSize: isMobile ? 26 : 30,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Informasi pengguna aplikasi SmartFloorPlan.',
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: isMobile ? 13.5 : 15,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(isMobile ? 20 : 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(26),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.035),
-                            blurRadius: 18,
-                            offset: const Offset(0, 10),
+              child: RefreshIndicator(
+                onRefresh: profile.loadProfile,
+                color: orange,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    isMobile ? 16 : 24,
+                    isMobile ? 18 : 24,
+                    isMobile ? 16 : 24,
+                    110,
+                  ),
+                  child: Obx(
+                    () {
+                      if (profile.isLoading.value) {
+                        return SizedBox(
+                          height: MediaQuery.sizeOf(context).height * 0.70,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: orange,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Column(
+                        );
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: isMobile ? 82 : 90,
-                            height: isMobile ? 82 : 90,
-                            decoration: BoxDecoration(
-                              color: navy,
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                            child: Icon(
-                              Icons.person_rounded,
-                              color: Colors.white,
-                              size: isMobile ? 44 : 48,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
                           Text(
-                            'SmartFloorPlan User',
-                            textAlign: TextAlign.center,
+                            'Profil',
                             style: TextStyle(
                               color: navy,
-                              fontSize: isMobile ? 21 : 23,
+                              fontSize: isMobile ? 26 : 30,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
-                            'user@smartfloorplan.com',
-                            textAlign: TextAlign.center,
+                            'Informasi pengguna aplikasi SmartFloorPlan.',
                             style: TextStyle(
                               color: Colors.black54,
-                              fontSize: isMobile ? 13.5 : 14.5,
+                              fontSize: isMobile ? 13.5 : 15,
+                              height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 22),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
+                            width: double.infinity,
+                            padding: EdgeInsets.all(isMobile ? 20 : 24),
                             decoration: BoxDecoration(
-                              color: softGrey,
-                              borderRadius: BorderRadius.circular(100),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(26),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.035),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
                             ),
-                            child: const Text(
-                              'Pengguna Demo',
-                              style: TextStyle(
-                                color: navy,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: isMobile ? 82 : 90,
+                                  height: isMobile ? 82 : 90,
+                                  decoration: BoxDecoration(
+                                    color: navy,
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      profile.initialName,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isMobile ? 34 : 38,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  profile.displayName,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: navy,
+                                    fontSize: isMobile ? 21 : 23,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  profile.displayEmail,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: isMobile ? 13.5 : 14.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: orange.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  child: const Text(
+                                    'Akun Aktif',
+                                    style: TextStyle(
+                                      color: orange,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 26),
+                                _buildProfileMenu(
+                                  icon: Icons.info_rounded,
+                                  title: 'Tentang Aplikasi',
+                                  subtitle: 'SmartFloorPlan Capstone Project',
+                                  onTap: () {
+                                    Get.snackbar(
+                                      'Tentang Aplikasi',
+                                      'SmartFloorPlan membantu membuat denah rumah 2D, edit layout, RAB, dan scan sketsa.',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: navy,
+                                      colorText: Colors.white,
+                                    );
+                                  },
+                                ),
+                                _buildProfileMenu(
+                                  icon: Icons.help_rounded,
+                                  title: 'Bantuan Penggunaan',
+                                  subtitle: 'Panduan singkat fitur aplikasi',
+                                  onTap: () {
+                                    Get.snackbar(
+                                      'Bantuan',
+                                      'Gunakan Generate Denah untuk membuat layout, atau Scan Sketsa untuk membaca gambar denah.',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: navy,
+                                      colorText: Colors.white,
+                                    );
+                                  },
+                                ),
+                                Obx(
+                                  () => _buildProfileMenu(
+                                    icon: Icons.logout_rounded,
+                                    title: profile.isLoggingOut.value
+                                        ? 'Logout...'
+                                        : 'Logout',
+                                    subtitle: 'Keluar dari akun SmartFloorPlan',
+                                    iconColor: Colors.red,
+                                    textColor: Colors.red,
+                                    onTap: profile.isLoggingOut.value
+                                        ? () {}
+                                        : profile.logout,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 26),
-                          _buildProfileMenu(
-                            icon: Icons.info_rounded,
-                            title: 'Tentang Aplikasi',
-                            subtitle: 'SmartFloorPlan Capstone Project',
-                            onTap: () {
-                              Get.snackbar(
-                                'Tentang Aplikasi',
-                                'SmartFloorPlan membantu membuat denah rumah 2D, edit layout, RAB, dan scan sketsa.',
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: navy,
-                                colorText: Colors.white,
-                              );
-                            },
-                          ),
-                          _buildProfileMenu(
-                            icon: Icons.help_rounded,
-                            title: 'Bantuan Penggunaan',
-                            subtitle: 'Panduan singkat fitur aplikasi',
-                            onTap: () {
-                              Get.snackbar(
-                                'Bantuan',
-                                'Gunakan Generate Denah untuk membuat layout, atau Scan Sketsa untuk membaca gambar denah.',
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: navy,
-                                colorText: Colors.white,
-                              );
-                            },
-                          ),
-                          _buildProfileMenu(
-                            icon: Icons.logout_rounded,
-                            title: 'Logout',
-                            subtitle: 'Keluar dari akun demo',
-                            iconColor: Colors.red,
-                            textColor: Colors.red,
-                            onTap: () => Get.offAllNamed(AppRoutes.login),
                           ),
                         ],
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

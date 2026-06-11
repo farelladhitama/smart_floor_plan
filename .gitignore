@@ -43,3 +43,27 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Backend local database
+backend_smartfloorplan/*.db
+
+# Python cache
+backend_smartfloorplan/__pycache__/
+backend_smartfloorplan/**/__pycache__/
+
+# Backend virtual environment
+backend_smartfloorplan/venv/
+
+
+# Environment secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
+
+# Environment secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
+*.bak

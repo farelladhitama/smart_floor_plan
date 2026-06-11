@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
@@ -169,7 +169,7 @@ class CinematicSplashScreen extends StatelessWidget {
                                     SizedBox(width: isSmallPhone ? 9 : 12),
                                     Expanded(
                                       child: Text(
-                                        'Generate • Edit • RAB • Scan Sketsa',
+                                        'Generate  |  Edit  |  RAB  |  Scan Sketsa',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: isSmallPhone ? 12 : 14,
