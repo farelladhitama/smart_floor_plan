@@ -38,7 +38,7 @@ class LoginScreen extends GetView<LoginController> {
                     children: [
                       const _HeaderCard(),
                       const SizedBox(height: 22),
-                      _LoginCard(controller: controller),
+                      _LoginCard(controller: controller), 
                     ],
                   ),
                 ),

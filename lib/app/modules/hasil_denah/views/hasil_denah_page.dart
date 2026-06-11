@@ -207,7 +207,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
           const SizedBox(height: 12),
           const Center(
             child: Text(
-              'Cubit atau scroll untuk zoom â€¢ geser untuk melihat detail',
+              'Cubit atau scroll untuk zoom  |  geser untuk melihat detail',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -343,7 +343,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
             Expanded(
               child: _infoBox(
                 icon: Icons.square_foot_rounded,
-                label: '${landArea.toStringAsFixed(1)} mÂ²',
+                label: '${landArea.toStringAsFixed(1)} m2',
                 subtitle: 'Luas lahan',
               ),
             ),
@@ -351,7 +351,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
             Expanded(
               child: _infoBox(
                 icon: Icons.home_rounded,
-                label: '${buildingArea.toStringAsFixed(1)} mÂ²',
+                label: '${buildingArea.toStringAsFixed(1)} m2',
                 subtitle: 'Luas ruang',
               ),
             ),
@@ -476,7 +476,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
             ),
           ),
           Text(
-            '${area.toStringAsFixed(1)} mÂ²',
+            '${area.toStringAsFixed(1)} m2',
             style: const TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w800,
@@ -894,6 +894,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     }
   }
 }
+
 
 
 

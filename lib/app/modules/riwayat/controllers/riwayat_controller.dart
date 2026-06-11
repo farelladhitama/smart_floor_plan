@@ -33,19 +33,42 @@ class RiwayatController extends GetxController {
     try {
       isLoading.value = true;
 
-      final response = await _supabase
+      final generateResponse = await _supabase
           .from('floor_plans')
           .select(
-            'id, title, panjang_lahan, lebar_lahan, jumlah_kamar, material, ruang_tambahan, total_luas, estimasi_rab, rooms_json, created_at, updated_at',
+            'id, title, panjang_lahan, lebar_lahan, jumlah_kamar, material_dinding, material_semen, material_pasir, material_keramik_lantai, material_cat_dinding, material_genteng_atap, material_plafon, material_pipa, ruang_tambahan, total_luas, estimasi_rab, rooms_json, created_at, updated_at',
           )
           .eq('user_id', user.id)
           .order('updated_at', ascending: false);
 
-      final List<Map<String, dynamic>> rows = (response as List)
+      final scanResponse = await _supabase
+          .from('scan_floor_plans')
+          .select(
+            'id, title, panjang_lahan, lebar_lahan, jumlah_ruang, material_dinding, material_semen, material_pasir, material_keramik_lantai, material_cat_dinding, material_genteng_atap, material_plafon, material_pipa, total_luas, estimasi_rab, detected_rooms_json, scan_image_name, created_at, updated_at',
+          )
+          .eq('user_id', user.id)
+          .order('updated_at', ascending: false);
+
+      final List<Map<String, dynamic>> generateRows = (generateResponse as List)
           .map((item) => Map<String, dynamic>.from(item as Map))
+          .map(_normalizeGenerateHistory)
           .toList();
 
-      histories.assignAll(rows);
+      final List<Map<String, dynamic>> scanRows = (scanResponse as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .map(_normalizeScanHistory)
+          .toList();
+
+      final List<Map<String, dynamic>> combined = <Map<String, dynamic>>[
+        ...generateRows,
+        ...scanRows,
+      ];
+
+      combined.sort((a, b) {
+        return _historySortDate(b).compareTo(_historySortDate(a));
+      });
+
+      histories.assignAll(combined);
     } on PostgrestException catch (error) {
       showMessage(
         'Gagal Memuat Riwayat',
@@ -61,6 +84,51 @@ class RiwayatController extends GetxController {
     }
   }
 
+  Map<String, dynamic> _normalizeGenerateHistory(Map<String, dynamic> item) {
+    return <String, dynamic>{
+      ...item,
+      '_source_table': 'floor_plans',
+      '_history_type': 'generate',
+      'jumlah_ruang': item['jumlah_kamar'],
+    };
+  }
+
+  Map<String, dynamic> _normalizeScanHistory(Map<String, dynamic> item) {
+    final dynamic detectedRooms = item['detected_rooms_json'];
+    final List<dynamic> rooms = detectedRooms is List ? detectedRooms : <dynamic>[];
+
+    return <String, dynamic>{
+      ...item,
+      '_source_table': 'scan_floor_plans',
+      '_history_type': 'scan',
+      'rooms_json': rooms,
+      'jumlah_kamar': item['jumlah_ruang'] ?? rooms.length,
+      'ruang_tambahan': <String>[],
+    };
+  }
+
+  String _historySourceTable(Map<String, dynamic> item) {
+    final String table = (item['_source_table'] ?? '').toString();
+
+    if (table == 'scan_floor_plans') {
+      return 'scan_floor_plans';
+    }
+
+    return 'floor_plans';
+  }
+
+  bool _isScanHistory(Map<String, dynamic> item) {
+    return _historySourceTable(item) == 'scan_floor_plans';
+  }
+
+  DateTime _historySortDate(Map<String, dynamic> item) {
+    final String rawDate =
+        (item['updated_at'] ?? item['created_at'] ?? '').toString();
+
+    return DateTime.tryParse(rawDate) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
   String getTitle(Map<String, dynamic> item) {
     final String title = (item['title'] ?? '').toString().trim();
 
@@ -74,10 +142,16 @@ class RiwayatController extends GetxController {
   String getSubtitle(Map<String, dynamic> item) {
     final String lebar = _formatNumber(item['lebar_lahan']);
     final String panjang = _formatNumber(item['panjang_lahan']);
-    final String kamar = (item['jumlah_kamar'] ?? 0).toString();
-    final String material = (item['material'] ?? '-').toString();
+    final String material =
+        (item['material_dinding'] ?? item['material'] ?? '-').toString();
 
-    return '$lebar m x $panjang m â€¢ $kamar kamar â€¢ $material';
+    if (_isScanHistory(item)) {
+      return '$lebar m x $panjang m  |  ${getRoomCount(item)} ruang  |  $material';
+    }
+
+    final String kamar = (item['jumlah_kamar'] ?? 0).toString();
+
+    return '$lebar m x $panjang m  |  $kamar kamar  |  $material';
   }
 
   String getDate(Map<String, dynamic> item) {
@@ -106,7 +180,7 @@ class RiwayatController extends GetxController {
   }
 
   String getAreaText(Map<String, dynamic> item) {
-    return '${_formatNumber(item['total_luas'])} mÂ²';
+    return '${_formatNumber(item['total_luas'])} m2';
   }
 
   String getRabText(Map<String, dynamic> item) {
@@ -120,6 +194,18 @@ class RiwayatController extends GetxController {
 
     if (roomsJson is List) {
       return roomsJson.length;
+    }
+
+    final num jumlahRuang = _toNum(item['jumlah_ruang']);
+
+    if (jumlahRuang > 0) {
+      return jumlahRuang.toInt();
+    }
+
+    final num jumlahKamar = _toNum(item['jumlah_kamar']);
+
+    if (jumlahKamar > 0) {
+      return jumlahKamar.toInt();
     }
 
     return 0;
@@ -229,10 +315,34 @@ class RiwayatController extends GetxController {
         'totalLuas': luasBangunan,
         'inputLebarRumah': lebarLahan,
         'inputPanjangRumah': panjangLahan,
-        'material': (item['material'] ?? '').toString(),
+        'material': (item['material_dinding'] ?? item['material'] ?? '').toString(),
+        'selectedMaterials': _selectedMaterialsFromItem(item),
         'rooms': item['rooms_json'],
       },
     );
+  }
+
+  Map<String, String> _selectedMaterialsFromItem(Map<String, dynamic> item) {
+    final Map<String, String> result = <String, String>{};
+
+    void add(String kategori, dynamic value) {
+      final String materialName = (value ?? '').toString().trim();
+
+      if (materialName.isNotEmpty) {
+        result[kategori] = materialName;
+      }
+    }
+
+    add('Material Dinding', item['material_dinding']);
+    add('Semen', item['material_semen']);
+    add('Pasir', item['material_pasir']);
+    add('Keramik Lantai', item['material_keramik_lantai']);
+    add('Cat Dinding', item['material_cat_dinding']);
+    add('Genteng / Atap', item['material_genteng_atap']);
+    add('Plafon', item['material_plafon']);
+    add('Pipa', item['material_pipa']);
+
+    return result;
   }
 
   Future<void> openEdit(Map<String, dynamic> item) async {
@@ -269,7 +379,7 @@ class RiwayatController extends GetxController {
         inputLebarRumah: landWidth,
         inputPanjangRumah: landLength,
         floorPlanId: (item['id'] ?? '').toString(),
-        material: (item['material'] ?? 'Batu Bata').toString(),
+        material: (item['material_dinding'] ?? item['material'] ?? 'Batu Bata').toString(),
         jumlahKamar: _toNum(item['jumlah_kamar']).toInt(),
         ruangTambahan: _stringListFromDynamic(item['ruang_tambahan']),
       ),
@@ -289,10 +399,26 @@ class RiwayatController extends GetxController {
       return;
     }
 
-    try {
-      await _supabase.from('floor_plans').delete().eq('id', id);
+    final User? user = _supabase.auth.currentUser;
 
-      histories.removeWhere((history) => history['id'] == id);
+    if (user == null) {
+      Get.offAllNamed(AppRoutes.login);
+      return;
+    }
+
+    final String tableName = _historySourceTable(item);
+
+    try {
+      await _supabase
+          .from(tableName)
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+      histories.removeWhere((history) {
+        return history['id'] == id &&
+            _historySourceTable(history) == tableName;
+      });
 
       showMessage(
         'Berhasil',
@@ -449,4 +575,5 @@ class RiwayatController extends GetxController {
     );
   }
 }
+
 

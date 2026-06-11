@@ -1616,10 +1616,10 @@ for (final RoomModel room in rooms) {
       lines.add(_shortName(name));
     } else if (small) {
       lines.add(_shortName(name));
-      lines.add('${area.toStringAsFixed(1)} m²');
+      lines.add('${area.toStringAsFixed(1)} m2');
     } else {
       lines.add(name);
-      lines.add('${area.toStringAsFixed(1)} m²');
+      lines.add('${area.toStringAsFixed(1)} m2');
     }
 
     final double titleSize = tiny
@@ -1918,6 +1918,7 @@ for (final RoomModel room in rooms) {
     return false;
   }
 }
+
 
 
 

@@ -25,7 +25,7 @@ class ForgotPasswordController extends GetxController {
 
       await supabase.auth.resetPasswordForEmail(
         email,
-        redirectTo: 'http://localhost:3000',
+        redirectTo: '/#/reset-password',
       );
 
       Get.snackbar(
@@ -56,4 +56,5 @@ class ForgotPasswordController extends GetxController {
     super.onClose();
   }
 }
+
 

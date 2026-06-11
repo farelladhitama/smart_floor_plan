@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/scan_denah_controller.dart';
+import 'scan_camera_capture_page.dart';
 
 class ScanDenahPage extends GetView<ScanDenahController> {
   const ScanDenahPage({super.key});
@@ -56,6 +59,8 @@ class ScanDenahPage extends GetView<ScanDenahController> {
                     _buildImageCard(isMobile),
                     SizedBox(height: isMobile ? 16 : 20),
                     _buildResultCard(isMobile),
+                    SizedBox(height: isMobile ? 16 : 20),
+                    _buildMaterialSection(isMobile),
                     SizedBox(height: isMobile ? 16 : 20),
                     _buildButtons(isMobile),
                   ],
@@ -177,7 +182,7 @@ class ScanDenahPage extends GetView<ScanDenahController> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Pilih gambar sketsa denah dari galeri.',
+                          'Ambil dari kamera atau pilih gambar dari galeri/file.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey.shade500,
@@ -216,14 +221,15 @@ class ScanDenahPage extends GetView<ScanDenahController> {
               width: double.infinity,
               height: isMobile ? 50 : 54,
               child: ElevatedButton.icon(
-                onPressed:
-                    controller.isProcessing.value ? null : controller.pickImage,
+                onPressed: controller.isProcessing.value
+                    ? null
+                    : () => _showImageSourceSheet(controller),
                 icon: Icon(
                   Icons.upload_file_rounded,
                   size: isMobile ? 20 : 22,
                 ),
                 label: Text(
-                  'Pilih Gambar Denah',
+                  'Pilih Kamera / Galeri',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: isMobile ? 14 : 15,
@@ -421,6 +427,205 @@ class ScanDenahPage extends GetView<ScanDenahController> {
     });
   }
 
+
+  Widget _buildMaterialSection(bool isMobile) {
+    return Obx(() {
+      if (controller.isLoadingMaterials.value &&
+          controller.materialOptionsByCategory.isEmpty) {
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isMobile ? 16 : 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(isMobile ? 22 : 26),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.045),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Row(
+            children: [
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: orange,
+                  strokeWidth: 2.4,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Memuat pilihan material...',
+                  style: TextStyle(
+                    color: navy,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isMobile ? 16 : 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(isMobile ? 22 : 26),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.045),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: isMobile ? 38 : 42,
+                  height: isMobile ? 38 : 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1E8),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(
+                    Icons.layers_rounded,
+                    color: orange,
+                    size: isMobile ? 21 : 23,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Pilihan Material Scan',
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: isMobile ? 18 : 21,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pilih material untuk hasil scan agar RAB mengikuti pilihan bahan bangunan.',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: isMobile ? 12.5 : 13.5,
+                height: 1.45,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 14),
+            ...controller.materialCategories.map((category) {
+              final List<String> options =
+                  controller.materialOptionsByCategory[category] ?? <String>[];
+
+              if (options.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              final String? selected = controller.selectedMaterials[category];
+
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: background,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.grey.shade200,
+                  ),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selected != null && options.contains(selected)
+                        ? selected
+                        : options.first,
+                    isExpanded: true,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: navy,
+                    ),
+                    items: options.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(11),
+                              ),
+                              child: const Icon(
+                                Icons.layers_rounded,
+                                color: navy,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 11),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    category,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.black45,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    value,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: navy,
+                                      fontSize: isMobile ? 13 : 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      controller.changeMaterialForCategory(category, value);
+                    },
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      );
+    });
+  }
+
   Widget _buildButtons(bool isMobile) {
     return Obx(() {
       final hasRooms = controller.detectedRooms.isNotEmpty;
@@ -485,4 +690,171 @@ class ScanDenahPage extends GetView<ScanDenahController> {
       );
     });
   }
+
+  void _showImageSourceSheet(ScanDenahController controller) {
+    Get.bottomSheet(
+      SafeArea(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(26),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 46,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.black12,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Pilih Sumber Denah',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Gunakan kamera atau pilih gambar denah kosong dari galeri/file.',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 13.5,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              _imageSourceButton(
+                icon: Icons.camera_alt_rounded,
+                title: 'Ambil dari Kamera',
+                subtitle: 'Buka kamera HP atau kamera laptop/browser',
+                onTap: () async {
+                  Get.back();
+
+                  final result = await Get.to<Map<String, dynamic>>(
+                    () => const ScanCameraCapturePage(),
+                  );
+
+                  if (result == null) return;
+
+                  final dynamic bytes = result['bytes'];
+                  final String filename =
+                      (result['filename'] ?? 'scan_camera.jpg').toString();
+
+                  if (bytes is Uint8List) {
+                    await controller.scanPickedImageBytes(
+                      bytes: bytes,
+                      filename: filename,
+                      fromCamera: true,
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              _imageSourceButton(
+                icon: Icons.photo_library_rounded,
+                title: 'Pilih dari Galeri / File',
+                subtitle: 'Ambil gambar denah kosong yang sudah tersimpan',
+                onTap: () {
+                  Get.back();
+                  controller.pickImageFromGallery();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _imageSourceButton({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.14),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1E8),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: orange,
+                  size: 27,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: navy,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12.5,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: navy,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }

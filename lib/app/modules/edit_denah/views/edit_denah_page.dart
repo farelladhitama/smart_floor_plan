@@ -245,7 +245,7 @@ class _EditDenahPageState extends State<EditDenahPage> {
               ),
               SizedBox(height: 5),
               Text(
-                'Klik ruang untuk memilih • drag untuk menggeser',
+                'Klik ruang untuk memilih  |  drag untuk menggeser',
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w500,
@@ -411,7 +411,7 @@ class _EditDenahPageState extends State<EditDenahPage> {
           const SizedBox(height: 12),
           const Center(
             child: Text(
-              'Cubit atau scroll untuk zoom • klik ruang lalu drag untuk menggeser',
+              'Cubit atau scroll untuk zoom  |  klik ruang lalu drag untuk menggeser',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -1171,6 +1171,7 @@ class _EditSelectionPainter extends CustomPainter {
         oldDelegate.landLength != landLength;
   }
 }
+
 
 
 

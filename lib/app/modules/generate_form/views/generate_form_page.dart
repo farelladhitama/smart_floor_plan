@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:smart_floor_plan/app/modules/generate_form/controllers/generate_form_controller.dart';
+import 'package:smart_floor_plan/app/routes/app_routes.dart';
 
 class GenerateFormPage extends GetView<GenerateFormController> {
   const GenerateFormPage({super.key});
@@ -116,12 +117,22 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                         const SizedBox(height: 28),
 
                         _sectionTitle(
-                          title: 'Pilihan Material Dinding',
+                          title: 'Pilihan Material Utama',
                           subtitle:
-                              'Material digunakan sebagai dasar estimasi biaya RAB.',
+                              'Pilih material utama sesuai data harga dari hasil Big Data/API.',
                         ),
                         const SizedBox(height: 14),
                         _buildMaterialDropdown(),
+
+                        const SizedBox(height: 28),
+
+                        _sectionTitle(
+                          title: 'Tambahan Ruangan',
+                          subtitle:
+                              'Tulis kebutuhan ruang tambahan, pisahkan dengan koma. Contoh: mushola, gudang, ruang kerja.',
+                        ),
+                        const SizedBox(height: 14),
+                        _buildTambahanRuanganField(),
 
                         const SizedBox(height: 28),
 
@@ -324,72 +335,305 @@ class GenerateFormPage extends GetView<GenerateFormController> {
   }
 
   Widget _buildMaterialDropdown() {
+    return Obx(
+      () {
+        if (controller.isLoadingMaterials.value &&
+            controller.materialOptionsByCategory.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(17),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: borderColor),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: orange,
+                    strokeWidth: 2.4,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Memuat pilihan material dari Supabase...',
+                    style: TextStyle(
+                      color: navy,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: controller.materialCategories.map((category) {
+            final options =
+                controller.materialOptionsByCategory[category] ?? <String>[];
+
+            if (options.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final selected = controller.selectedMaterials[category];
+
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: borderColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: navy.withOpacity(0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selected != null && options.contains(selected)
+                      ? selected
+                      : options.first,
+                  isExpanded: true,
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: navy,
+                    size: 28,
+                  ),
+                  items: options.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: navy.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.layers_rounded,
+                              color: navy,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  category,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: mutedText,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  value,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    color: navy,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    controller.changeMaterialForCategory(category, value);
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildInitialRabPreview() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 5,
-      ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        color: const Color(0xFFFFF4EC),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: borderColor,
+          color: orange.withOpacity(0.28),
         ),
         boxShadow: [
           BoxShadow(
-            color: navy.withOpacity(0.04),
+            color: orange.withOpacity(0.08),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Obx(
-        () => DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: controller.selectedMaterial.value,
-            isExpanded: true,
-            icon: const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: navy,
-              size: 28,
-            ),
-            items: controller.materialOptions.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: navy.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.layers_rounded,
-                        color: navy,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: navy,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: orange.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value == null) return;
-              controller.changeMaterial(value);
-            },
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: orange,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Estimasi Awal Kebutuhan Bahan',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Setelah mengisi lebar dan panjang lahan, kamu bisa melihat perkiraan awal bahan bangunan seperti batu bata, semen, pasir, besi, keramik, cat, pipa, kabel, dan plafon.',
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 13,
+              height: 1.45,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final lebar = double.tryParse(
+                  controller.lebarController.text.replaceAll(',', '.'),
+                );
+                final panjang = double.tryParse(
+                  controller.panjangController.text.replaceAll(',', '.'),
+                );
+
+                if (lebar == null || panjang == null || lebar <= 0 || panjang <= 0) {
+                  Get.snackbar(
+                    'Data belum lengkap',
+                    'Isi lebar dan panjang lahan terlebih dahulu.',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                  return;
+                }
+
+                final luas = lebar * panjang;
+
+                Get.toNamed(
+                  AppRoutes.rab,
+                  arguments: {
+                    'luasBangunan': luas,
+                    'totalLuas': luas,
+                    'inputLebarRumah': lebar,
+                    'inputPanjangRumah': panjang,
+                  },
+                );
+              },
+              icon: const Icon(Icons.calculate_rounded),
+              label: const Text(
+                'LIHAT ESTIMASI RAB AWAL',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: orange,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTambahanRuanganField() {
+    return TextFormField(
+      controller: controller.tambahanRuanganController,
+      keyboardType: TextInputType.text,
+      textInputAction: TextInputAction.done,
+      minLines: 1,
+      maxLines: 3,
+      style: const TextStyle(
+        color: navy,
+        fontSize: 14.5,
+        fontWeight: FontWeight.w800,
+      ),
+      decoration: InputDecoration(
+        hintText: 'Contoh: mushola, gudang, ruang kerja',
+        helperText: 'Boleh kosong. Gunakan koma untuk lebih dari satu ruangan.',
+        helperStyle: const TextStyle(
+          color: mutedText,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIcon: const Icon(
+          Icons.add_home_work_rounded,
+          color: navy,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(
+            color: borderColor,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(
+            color: orange,
+            width: 1.7,
           ),
         ),
       ),
@@ -705,7 +949,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${room.width.toStringAsFixed(1)} m x ${room.height.toStringAsFixed(1)} m • ${area.toStringAsFixed(1)} m²',
+                          '${room.width.toStringAsFixed(1)} m x ${room.height.toStringAsFixed(1)} m  |  ${area.toStringAsFixed(1)} m2',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -786,7 +1030,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${landWidth.toStringAsFixed(1)} m x ${landLength.toStringAsFixed(1)} m • ${landArea.toStringAsFixed(1)} m²',
+                      '${landWidth.toStringAsFixed(1)} m x ${landLength.toStringAsFixed(1)} m  |  ${landArea.toStringAsFixed(1)} m2',
                       style: const TextStyle(
                         color: mutedText,
                         fontSize: 11.8,
@@ -824,7 +1068,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
               Expanded(
                 child: _buildMiniInfo(
                   title: 'Luas Lahan',
-                  value: '${landArea.toStringAsFixed(1)} m²',
+                  value: '${landArea.toStringAsFixed(1)} m2',
                   icon: Icons.crop_square_rounded,
                 ),
               ),
@@ -832,7 +1076,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
               Expanded(
                 child: _buildMiniInfo(
                   title: 'Luas Ruang',
-                  value: '${totalRecommendedArea.toStringAsFixed(1)} m²',
+                  value: '${totalRecommendedArea.toStringAsFixed(1)} m2',
                   icon: Icons.meeting_room_rounded,
                 ),
               ),
@@ -1010,3 +1254,5 @@ class GenerateFormPage extends GetView<GenerateFormController> {
     );
   }
 }
+
+

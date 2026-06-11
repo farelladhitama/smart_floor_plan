@@ -1,4 +1,4 @@
-import 'package:smart_floor_plan/app/core/floorplan/layout_templates/floor_plan_template.dart';
+﻿import 'package:smart_floor_plan/app/core/floorplan/layout_templates/floor_plan_template.dart';
 
 class FloorPlanLayoutCatalog {
   static LayoutSlot _slot(
@@ -129,7 +129,7 @@ class FloorPlanLayoutCatalog {
   }
 
   // ================================================================
-  // COMPACT - luas di bawah 70 m²
+  // COMPACT - luas di bawah 70 m2
   // ================================================================
 
   static final FloorPlanTemplate compactPortrait = FloorPlanTemplate(
@@ -205,7 +205,7 @@ class FloorPlanLayoutCatalog {
   );
 
   // ================================================================
-  // MEDIUM - luas 70 sampai 119 m²
+  // MEDIUM - luas 70 sampai 119 m2
   // ================================================================
 
   static final FloorPlanTemplate mediumPortrait = FloorPlanTemplate(
@@ -299,7 +299,7 @@ class FloorPlanLayoutCatalog {
   );
 
   // ================================================================
-  // FAMILY - luas 120 sampai 179 m²
+  // FAMILY - luas 120 sampai 179 m2
   // ================================================================
 
   static final FloorPlanTemplate familyPortrait = FloorPlanTemplate(
@@ -439,7 +439,7 @@ class FloorPlanLayoutCatalog {
   );
 
   // ================================================================
-  // PREMIUM - luas mulai 180 m²
+  // PREMIUM - luas mulai 180 m2
   // ================================================================
 
   static final FloorPlanTemplate premiumPortrait = FloorPlanTemplate(

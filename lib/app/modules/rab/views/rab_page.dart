@@ -15,6 +15,12 @@ class RabPage extends GetView<RabController> {
 
   @override
   Widget build(BuildContext context) {
+    controller.applyArgumentsFromPage(Get.arguments);
+
+    if (rooms != null) {
+      controller.setRooms(rooms);
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFEFF3F8),
       appBar: AppBar(
@@ -80,7 +86,7 @@ class RabPage extends GetView<RabController> {
           SizedBox(width: 14),
           Expanded(
             child: Text(
-              'RAB kebutuhan bahan bangunan rumah berdasarkan luas bangunan dan data harga material.',
+              'Estimasi awal bahan bangunan rumah berdasarkan luas lahan/denah dan data harga dari Supabase.',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -113,7 +119,7 @@ class RabPage extends GetView<RabController> {
             onChanged: controller.setLuas,
             decoration: InputDecoration(
               labelText: 'Luas bangunan',
-              suffixText: 'mÂ²',
+              suffixText: 'm2',
               prefixIcon: const Icon(Icons.square_foot_rounded),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -154,7 +160,7 @@ class RabPage extends GetView<RabController> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Berdasarkan luas ${controller.luasBangunan.value.toStringAsFixed(1)} mÂ²',
+            'Berdasarkan luas ${controller.luasBangunan.value.toStringAsFixed(1)} m2',
             style: const TextStyle(
               color: Color(0xFFFFEFE6),
               fontWeight: FontWeight.w700,
@@ -180,7 +186,7 @@ class RabPage extends GetView<RabController> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Jumlah bahan dihitung berdasarkan luas bangunan dan koefisien estimasi awal.',
+            'Jumlah bahan dihitung otomatis dari luas bangunan menggunakan koefisien estimasi awal.',
             style: TextStyle(
               color: Colors.black54,
               fontSize: 12.5,
@@ -236,8 +242,8 @@ class RabPage extends GetView<RabController> {
               const SizedBox(width: 10),
               Expanded(
                 child: miniInfo(
-                  'Harga satuan',
-                  controller.rupiah(item.hargaSatuan),
+                  'Harga per 1 ${item.satuan}',
+                  '${controller.rupiah(item.hargaSatuan)} / ${item.satuan}',
                 ),
               ),
             ],
@@ -322,3 +328,7 @@ class RabPage extends GetView<RabController> {
     );
   }
 }
+
+
+
+
