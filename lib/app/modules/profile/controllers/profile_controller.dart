@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
+import 'package:smart_floor_plan/app/services/activity_log_service.dart';
 
 class ProfileController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
@@ -72,13 +73,18 @@ class ProfileController extends GetxController {
       return;
     }
 
-    try {
-      isLoggingOut.value = true;
+   try {
+  isLoggingOut.value = true;
 
-      await _supabase.auth.signOut();
+  await ActivityLogService.addLog(
+    title: "Logout",
+    description: "User keluar dari aplikasi",
+    icon: "logout",
+  );
 
-      Get.offAllNamed(AppRoutes.login);
+  await _supabase.auth.signOut();
 
+  Get.offAllNamed(AppRoutes.login);
       showMessage(
         'Logout Berhasil',
         'Anda telah keluar dari akun SmartFloorPlan.',

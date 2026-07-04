@@ -36,6 +36,10 @@ class _EditDenahPageState extends State<EditDenahPage> {
   late List<RoomModel> _rooms;
   int? _selectedIndex;
 
+  // ===== Undo & Redo =====
+  final List<List<RoomModel>> _undoStack = [];
+  final List<List<RoomModel>> _redoStack = [];
+
   static const Color navy = Color(0xFF0D1B2A);
   static const Color orange = Color(0xFFE47B3E);
   static const Color bg = Color(0xFFF5F7FA);
@@ -47,6 +51,75 @@ class _EditDenahPageState extends State<EditDenahPage> {
     super.initState();
     _rooms = _readInitialRooms();
   }
+
+  // =========================
+  // UNDO & REDO
+  // =========================
+
+  List<RoomModel> _copyRooms(List<RoomModel> source) {
+    return source
+        .map(
+          (room) => RoomModel(
+            nama: room.nama,
+            category: room.category,
+            x: room.x,
+            y: room.y,
+            width: room.width,
+            height: room.height,
+          ),
+        )
+        .toList();
+  }
+
+  void _saveHistory() {
+    _undoStack.add(_copyRooms(_rooms));
+    _redoStack.clear();
+  }
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+
+    _redoStack.add(_copyRooms(_rooms));
+
+    setState(() {
+      _rooms = _undoStack.removeLast();
+
+      if (_selectedIndex != null &&
+          _selectedIndex! >= _rooms.length) {
+        _selectedIndex = null;
+      }
+    });
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+
+    _undoStack.add(_copyRooms(_rooms));
+
+    setState(() {
+      _rooms = _redoStack.removeLast();
+
+      if (_selectedIndex != null &&
+          _selectedIndex! >= _rooms.length) {
+        _selectedIndex = null;
+      }
+    });
+  }
+
+  void _deleteRoom() {
+    if (_selectedIndex == null) return;
+
+    _saveHistory();
+
+    setState(() {
+      _rooms.removeAt(_selectedIndex!);
+      _selectedIndex = null;
+    });
+  }
+
+  // =========================
+  // READ INITIAL ROOMS
+  // =========================
 
   List<RoomModel> _readInitialRooms() {
     if (widget.initialRooms.isNotEmpty) {
@@ -88,7 +161,6 @@ class _EditDenahPageState extends State<EditDenahPage> {
 
     return <RoomModel>[];
   }
-
   double get _landWidth {
     final dynamic args = Get.arguments;
 
@@ -355,18 +427,20 @@ class _EditDenahPageState extends State<EditDenahPage> {
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.translucent,
                                   onTapDown: (details) {
-                                    final int? index = _findRoomIndexAt(
-                                      details.localPosition,
-                                      canvasSize,
-                                      rooms,
-                                      landWidth,
-                                      landLength,
-                                    );
+   final int? index = _findRoomIndexAt(
+    details.localPosition,
+    canvasSize,
+    rooms,
+    landWidth,
+    landLength,
+  );
 
-                                    setState(() {
-                                      _selectedIndex = index;
-                                    });
-                                  },
+  print("Selected : $index");
+
+  setState(() {
+    _selectedIndex = index;
+  });
+},
                                   onPanStart: (details) {
                                     final int? index = _findRoomIndexAt(
                                       details.localPosition,
@@ -532,6 +606,8 @@ class _EditDenahPageState extends State<EditDenahPage> {
   }
 
   Widget _buildResizePanel() {
+    print("selected = $_selectedIndex");
+    print("rooms = ${_rooms.length}");
     if (_selectedIndex == null ||
         _selectedIndex! < 0 ||
         _selectedIndex! >= _rooms.length) {
@@ -649,21 +725,52 @@ class _EditDenahPageState extends State<EditDenahPage> {
                   onTap: () => _resizeSelectedRoom(
                     deltaWidth: 0.2,
                     deltaHeight: 0.2,
+                    
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          _quickResizeButton(
-            label: 'Rotasi Ruangan 90°',
-            icon: Icons.rotate_90_degrees_ccw_rounded,
-            onTap: _rotateSelectedRoom,
-          ),
-        ],
+         _quickResizeButton(
+  label: 'Rotasi Ruangan 90°',
+  icon: Icons.rotate_90_degrees_ccw_rounded,
+  onTap: _rotateSelectedRoom,
+),
+
+const SizedBox(height: 14),
+
+_quickResizeButton(
+  label: 'Hapus Ruangan',
+  icon: Icons.delete_rounded,
+  onTap: _deleteRoom,
+),
+
+const SizedBox(height: 10),
+
+Row(
+  children: [
+    Expanded(
+      child: _quickResizeButton(
+        label: 'Undo',
+        icon: Icons.undo_rounded,
+        onTap: _undo,
       ),
-    );
-  }
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: _quickResizeButton(
+        label: 'Redo',
+        icon: Icons.redo_rounded,
+        onTap: _redo,
+      ),
+    ),
+  ],
+),
+      ],
+    ),
+  );
+}
 
   Widget _resizeRow({
     required String title,
@@ -806,6 +913,8 @@ class _EditDenahPageState extends State<EditDenahPage> {
         .clamp(minRoomHeight, maxHeight)
         .toDouble();
 
+          _saveHistory();
+
     setState(() {
       _rooms[_selectedIndex!] = RoomModel(
         nama: oldRoom.nama,
@@ -840,6 +949,8 @@ class _EditDenahPageState extends State<EditDenahPage> {
     if (newY + rotatedHeight > safeLandLength) {
       newY = math.max(0, safeLandLength - rotatedHeight);
     }
+
+    _saveHistory();
 
     setState(() {
       _rooms[_selectedIndex!] = RoomModel(

@@ -10,5 +10,6 @@
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
   static const rab = '/rab';
+  static const ACTIVITY_LOG = '/activity-log';
 }
 

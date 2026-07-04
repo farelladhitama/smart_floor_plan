@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
+import 'package:smart_floor_plan/app/services/activity_log_service.dart';
 
 enum AuthMode {
   login,
@@ -254,6 +255,11 @@ class LoginController extends GetxController {
        * login berikutnya langsung Dashboard.
        */
       if (alreadyVerified) {
+        await ActivityLogService.addLog(
+           title: "Login",
+         description: "User berhasil login ke aplikasi",
+        icon: "login",
+        );
         Get.offAllNamed(AppRoutes.dashboard);
 
         showMessage(

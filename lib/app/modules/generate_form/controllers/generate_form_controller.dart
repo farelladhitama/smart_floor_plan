@@ -9,12 +9,15 @@ import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah
     as hasil_controller;
 import 'package:smart_floor_plan/app/modules/hasil_denah/views/hasil_denah_page.dart'
     as hasil_view;
+import 'package:smart_floor_plan/app/services/activity_log_service.dart';
 
 class GenerateFormController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
   static const Color orange = Color(0xFFE47B3E);
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  
 
   final TextEditingController lebarController = TextEditingController();
   final TextEditingController panjangController = TextEditingController();
@@ -279,11 +282,11 @@ class GenerateFormController extends GetxController {
       hasAnalyzedRecommendation.value = true;
     } finally {
       isAnalyzingRecommendation.value = false;
-      _closeLoadingDialogIfOpen();
+      _closeLoadingDialogIfOpen();    
     }
   }
 
-  void prosesGenerate() {
+  Future<void> prosesGenerate() async {
     if (!formKey.currentState!.validate()) return;
 
     final double lebarRumah = double.parse(lebarController.text.trim());
@@ -302,6 +305,7 @@ class GenerateFormController extends GetxController {
     final List<String> extraRoomNames = _extraRoomNames(extraRooms);
 
     final SmartFloorPlanResult result = SmartFloorPlanEngine.generate(
+      
       landWidth: lebarRumah,
       landLength: panjangRumah,
       bedroomCount: bedroomCount,
@@ -328,6 +332,12 @@ class GenerateFormController extends GetxController {
     final String materialDinding =
         selectedMaterials['Material Dinding'] ?? selectedMaterial.value;
 
+await ActivityLogService.addLog(
+  title: "Generate Denah",
+  description:
+      "Generate denah ${result.landWidth} x ${result.landLength} m ($bedroomCount kamar)",
+  icon: "home",
+);
     Get.to(
       () => hasil_view.HasilDenahPage(
         rooms: generatedRooms,

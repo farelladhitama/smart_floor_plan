@@ -9,6 +9,7 @@ import 'package:smart_floor_plan/app/modules/rab/controllers/rab_controller.dart
 import 'package:smart_floor_plan/app/modules/rab/views/rab_page.dart';
 import 'package:smart_floor_plan/app/modules/riwayat/controllers/riwayat_controller.dart';
 import 'package:smart_floor_plan/app/services/material_price_service.dart';
+import 'package:smart_floor_plan/app/services/activity_log_service.dart';
 
 class HasilDenahController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
@@ -611,6 +612,12 @@ final double estimasiMaterialRab = await _calculateEstimasiMaterialRab(
           message: 'Denah berhasil disimpan ke database Supabase.',
         );
       }
+      await ActivityLogService.addLog(
+  title: "Simpan Denah",
+  description:
+      "Denah ${landWidth.toStringAsFixed(1)} x ${landLength.toStringAsFixed(1)} berhasil disimpan",
+  icon: "save",
+);
 
       isSaved.value = true;
 
@@ -932,7 +939,14 @@ final double estimasiMaterialRab = await _calculateEstimasiMaterialRab(
       currentRooms.assignAll(
         result.map((room) => room.copyWith()).toList(),
       );
+      await ActivityLogService.addLog(
+  title: "Edit Denah",
+  description:
+      "Denah ${landWidth.toStringAsFixed(1)} x ${landLength.toStringAsFixed(1)} berhasil diedit",
+  icon: "edit",
+);
       isSaved.value = false;
+      await simpanDenah();
     }
   }
 

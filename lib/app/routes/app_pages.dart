@@ -33,6 +33,9 @@ import '../modules/generate_form/bindings/generate_form_binding.dart';
 import '../modules/scan_denah/views/scan_denah_page.dart';
 import '../modules/scan_denah/bindings/scan_denah_binding.dart';
 
+import 'package:smart_floor_plan/app/modules/activity_log/views/activity_log_page.dart';
+import 'package:smart_floor_plan/app/modules/activity_log/bindings/activity_log_binding.dart';
+
 class AppPages {
     static String get initial {
     final String url = Uri.base.toString();
@@ -103,11 +106,17 @@ class AppPages {
       binding: ScanDenahBinding(),
     ),
     GetPage(
-      name: AppRoutes.rab,
-      page: () => const RabPage(),
-      binding: RabBinding(),
-    ),
-  ];
+  name: AppRoutes.rab,
+  page: () => const RabPage(),
+  binding: RabBinding(),
+),
+
+GetPage(
+  name: AppRoutes.ACTIVITY_LOG,
+  page: () => const ActivityLogPage(),
+  binding: ActivityLogBinding(),
+),
+    ];
 }
 
 

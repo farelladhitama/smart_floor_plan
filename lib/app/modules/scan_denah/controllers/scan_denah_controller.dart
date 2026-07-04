@@ -23,7 +23,7 @@ class ScanDenahController extends GetxController {
   final scanLandWidth = 10.0.obs;
   final scanLandLength = 12.0.obs;
 
-  final String baseUrl = 'http://127.0.0.1:5000';
+  final String baseUrl = "https://achmadmundakir.pythonanywhere.com";
 
   final List<String> materialCategories = const [
     'Material Dinding',

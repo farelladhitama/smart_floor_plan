@@ -476,6 +476,7 @@ class DashboardPage extends GetView<DashboardController> {
                                     );
                                   },
                                 ),
+
                                 _buildProfileMenu(
                                   icon: Icons.help_rounded,
                                   title: 'Bantuan Penggunaan',
@@ -490,6 +491,14 @@ class DashboardPage extends GetView<DashboardController> {
                                     );
                                   },
                                 ),
+                                _buildProfileMenu(
+  icon: Icons.history_rounded,
+  title: 'Activity Log',
+  subtitle: 'Lihat riwayat aktivitas pengguna',
+  onTap: () {
+    Get.toNamed(AppRoutes.ACTIVITY_LOG);
+  },
+),
                                 Obx(
                                   () => _buildProfileMenu(
                                     icon: Icons.logout_rounded,

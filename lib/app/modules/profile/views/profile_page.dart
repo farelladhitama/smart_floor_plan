@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/profile_controller.dart';
+import 'package:smart_floor_plan/app/routes/app_routes.dart';
 
 class ProfilePage extends GetView<ProfileController> {
   const ProfilePage({super.key});
@@ -388,31 +389,43 @@ class _MenuCard extends StatelessWidget {
           color: ProfilePage.border,
         ),
       ),
-      child: Column(
-        children: [
-          _MenuTile(
-            icon: Icons.refresh_rounded,
-            title: 'Muat ulang profil',
-            subtitle: 'Ambil ulang data dari Supabase',
-            onTap: controller.loadProfile,
-          ),
-          const Divider(height: 1),
-          Obx(
-            () => _MenuTile(
-              icon: Icons.logout_rounded,
-              title: 'Logout',
-              subtitle: 'Keluar dari akun SmartFloorPlan',
-              isDanger: true,
-              isLoading: controller.isLoggingOut.value,
-              onTap: controller.logout,
-            ),
-          ),
-        ],
+     child: Column(
+  children: [
+    _MenuTile(
+      icon: Icons.refresh_rounded,
+      title: 'Muat ulang profil',
+      subtitle: 'Ambil ulang data dari Supabase',
+      onTap: controller.loadProfile,
+    ),
+
+    const Divider(height: 1),
+
+    _MenuTile(
+      icon: Icons.history,
+      title: 'Activity Log',
+      subtitle: 'Lihat riwayat aktivitas',
+      onTap: () {
+        Get.toNamed(AppRoutes.ACTIVITY_LOG);
+      },
+    ),
+
+    const Divider(height: 1),
+
+    Obx(
+      () => _MenuTile(
+        icon: Icons.logout_rounded,
+        title: 'Logout',
+        subtitle: 'Keluar dari akun SmartFloorPlan',
+        isDanger: true,
+        isLoading: controller.isLoggingOut.value,
+        onTap: controller.logout,
       ),
+    ),
+  ],
+),
     );
   }
 }
-
 class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String title;

@@ -1,0 +1,20 @@
+diff --git a/lib/app/widgets/professional_floor_plan_painter.dart b/lib/app/widgets/professional_floor_plan_painter.dart
+--- a/lib/app/widgets/professional_floor_plan_painter.dart
++++ b/lib/app/widgets/professional_floor_plan_painter.dart
+@@
+     for (final RoomModel room in indoorRooms) {
+       final Rect rect = _roomToRect(room, plotRect);
+       _drawDoor(canvas, rect, plotRect, room);
+     }
+
++    // Render outdoor objects
++    for (final RoomModel room in outdoorRooms) {
++      final Rect rect = _roomToRect(room, plotRect);
++      _drawOutdoorObject(canvas, rect, room);
++    }
++
++    // Render indoor furniture
+     for (final RoomModel room in indoorRooms) {
+       final Rect rect = _roomToRect(room, plotRect);
+       _drawFurniture(canvas, rect, room);
+     }
