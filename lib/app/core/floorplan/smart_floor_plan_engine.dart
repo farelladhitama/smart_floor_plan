@@ -4,14 +4,14 @@ import 'package:smart_floor_plan/app/core/floorplan/room_recommendation.dart';
 import 'package:smart_floor_plan/app/data/models/room_model.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  RESULT
+//  HASIL
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class SmartFloorPlanResult {
   final double landWidth;
   final double landLength;
   final List<RoomModel> rooms;
-
+  
   const SmartFloorPlanResult({
     required this.landWidth,
     required this.landLength,
@@ -25,21 +25,28 @@ class SmartFloorPlanResult {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  ENGINE
+//  ENGINE (MESIN GENERATOR DENAH)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class SmartFloorPlanEngine {
-  // ── Constants ──────────────────────────────────────────────────────────────
-  static const double _minRoom   = 1.2;   // minimum room dimension (m)
-  static const double _wallGap   = 0.0;   // gap between rooms (set 0 = wall-to-wall)
+  // ── Konstanta ──────────────────────────────────────────────────────────────
+  static const double _minRoom   = 1.2;   // dimensi minimum ruangan (m)
+  static const double _wallGap   = 0.0;   // jarak antar ruang (0 = dinding-ke-dinding)
 
-  // ── Tier boundaries ────────────────────────────────────────────────────────
+  // NOTE: _activeRng adalah "sumber keacakan" yang aktif selama satu proses
+  // generate() berjalan. Ini dipakai oleh _pick() supaya nilai proporsi ruang
+  // tidak lagi tetap/statis, melainkan punya variasi halus (jitter) setiap
+  // kali generate dipanggil — tanpa perlu mengubah signature semua fungsi
+  // builder (_tinyNarrow, _mediumWide, dst) yang sudah ada.
+  static math.Random? _activeRng;
+
+  // ── Batas tingkatan luas lahan ─────────────────────────────────────────────
   static const double _tinyMax   = 45;
   static const double _smallMax  = 72;
   static const double _mediumMax = 140;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  PUBLIC: getRecommendations
+  //  PUBLIK: getRecommendations
   // ═══════════════════════════════════════════════════════════════════════════
 
   static List<RoomRecommendation> getRecommendations({
@@ -70,7 +77,7 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  PUBLIC: generate
+  //  PUBLIK: generate
   // ═══════════════════════════════════════════════════════════════════════════
 
   static SmartFloorPlanResult generate({
@@ -83,7 +90,7 @@ class SmartFloorPlanEngine {
     final double W = _safe(landWidth,  8);
     final double L = _safe(landLength, 10);
     final double area  = W * L;
-    final double ratio = W / L;   // <1 narrow, >1 wide
+    final double ratio = W / L;   // <1 sempit (narrow), >1 lebar (wide)
 
     final int beds = bedroomCount <= 0
         ? estimateBedroomCount(landWidth: W, landLength: L)
@@ -91,6 +98,24 @@ class SmartFloorPlanEngine {
 
     final rng     = seed != null ? math.Random(seed) : math.Random();
     final variant = rng.nextInt(4);
+
+    // Aktifkan sumber randomness untuk sesi generate ini. Dipakai oleh _pick()
+    // agar setiap rasio pembagian ruang (bukan hanya 4 variant tetap) punya
+    // kemungkinan hasil yang berbeda meski ukuran lahan & jumlah kamar sama.
+    _activeRng = rng;
+
+    // ── Variasi orientasi layout ────────────────────────────────────────────
+    // mirrorX  : membalik denah kiri↔kanan  (ruang tamu bisa pindah dari
+    //            kanan ke kiri, dapur dari kiri ke kanan, dst)
+    // mirrorY  : membalik denah depan↔belakang (mewakili "rotasi zona":
+    //            urutan zona depan-tengah-belakang bisa terbalik jadi
+    //            belakang-tengah-depan)
+    // Kombinasi keduanya menghasilkan 4 orientasi berbeda × variasi rasio
+    // kontinu di atas × 4 variant struktural = variasi yang jauh lebih banyak
+    // dari sebelumnya, tanpa mengubah aturan dasar arsitektur (adjacency
+    // antar ruang tetap dijaga karena hanya koordinat yang dicerminkan).
+    final bool mirrorX = rng.nextBool();
+    final bool mirrorY = rng.nextBool();
 
     List<RoomModel> rooms;
 
@@ -119,6 +144,16 @@ class SmartFloorPlanEngine {
           : _largeNarrow(W, L, beds.clamp(3, 5), extraRooms, variant);
     }
 
+    // Terapkan mirroring sebelum normalize. Ini yang membuat posisi ruang
+    // tamu/dapur/kamar dkk tidak lagi "hampir tidak pernah berubah" —
+    // hubungan antar ruang (siapa bersebelahan dengan siapa) tetap sama,
+    // hanya orientasinya yang dibalik sesuai lahan.
+    rooms = _applyOrientation(rooms, W, L, mirrorX, mirrorY);
+
+    // Selesai membangun satu denah → lepas rng aktif supaya tidak
+    // "menempel" ke pemanggilan generate() lain di luar konteks ini.
+    _activeRng = null;
+
     return SmartFloorPlanResult(
       landWidth:  W,
       landLength: L,
@@ -142,11 +177,11 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  TIER 1 – TINY  (≤ 45 m²)
+  //  TINGKAT 1 – MUNGIL (TINY)  (≤ 45 m²)
   //  Prinsip: ZERO margin, gunakan 100% lahan, max 5 ruangan
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Tiny narrow  – layout linier vertikal, semua zona memenuhi lahan
+  /// Mungil memanjang (narrow) – layout linier vertikal, semua zona memenuhi lahan
   static List<RoomModel> _tinyNarrow(
     double W, double L, int beds,
     List<RoomRecommendation> extra, int v,
@@ -186,7 +221,7 @@ class SmartFloorPlanEngine {
     return rooms;
   }
 
-  /// Tiny wide – layout kolom kiri/kanan, semua zona memenuhi lahan
+  /// Mungil melebar (wide) – layout kolom kiri/kanan, semua zona memenuhi lahan
   static List<RoomModel> _tinyWide(
     double W, double L, int beds,
     List<RoomRecommendation> extra, int v,
@@ -219,7 +254,7 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  TIER 2 – SMALL  (45–72 m²)
+  //  TINGKAT 2 – KECIL (SMALL)  (45–72 m²)
   //  Prinsip: margin minimal (teras sebagai elemen denah, bukan yard)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -324,7 +359,7 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  TIER 3 – MEDIUM  (72–140 m²)
+  //  TINGKAT 3 – SEDANG (MEDIUM)  (72–140 m²)
   // ═══════════════════════════════════════════════════════════════════════════
 
   static List<RoomModel> _mediumNarrow(
@@ -348,17 +383,17 @@ class SmartFloorPlanEngine {
     final double rP = _pick(v, [0.27, 0.30, 0.28, 0.25]);
     final double rV = _pick(v, [0.28, 0.26, 0.26, 0.32]);
 
-    final double zF = bH * rF;   // front: teras+tamu
-    final double zP = bH * rP;   // public: keluarga
-    final double zV = bH * rV;   // private: kamar
-    final double zS = bH - zF - zP - zV;  // service: dapur+km
+    final double zF = bH * rF;   // depan: teras + ruang tamu
+    final double zP = bH * rP;   // publik: ruang keluarga
+    final double zV = bH * rV;   // privat: kamar tidur
+    final double zS = bH - zF - zP - zV;  // servis: dapur + km/wc
 
     final double yS  = bY;
     final double yV  = bY + zS;
     final double yP  = bY + zS + zV;
     final double yF  = bY + zS + zV + zP;
 
-    // Front
+    // Zona Depan
     final bool hasCarport = W >= 7.0;
     final double cpW  = hasCarport ? _clamp(W * 0.30, 2.4, 3.2) : 0;
     final double terW = _clamp(bW * 0.24, 1.6, 2.6);
@@ -368,22 +403,22 @@ class SmartFloorPlanEngine {
     _add(rooms, nama:'Ruang Tamu',  cat:'living',  x:bX+cpW+terW,  y:yF,         w:bW-cpW-terW, h:zF);
     _add(rooms, nama:'Taman Depan', cat:'outdoor', x:bX, y:yF+zF, w:bW, h:taman);
 
-    // Public
+    // Zona Publik
     final double famW = bW * _pick(v, [0.62, 0.70, 0.58, 0.65]);
     _add(rooms, nama:'R. Keluarga',    cat:'family',  x:bX,       y:yP, w:famW,    h:zP);
     _add(rooms, nama:'Taman Samping',  cat:'outdoor', x:bX+famW,  y:yP, w:bW-famW, h:zP);
 
-    // v3: ada ruang makan di zona public
+    // v3: ada ruang makan di zona publik
     if (v == 3) {
       final double dinH = zP * 0.44;
       _add(rooms, nama:'R. Makan', cat:'dining',
           x:bX+famW*(beds<=2?0.65:0.60), y:yP, w:famW*(beds<=2?0.35:0.40), h:dinH);
     }
 
-    // Private – kamar
+    // Zona Privat – kamar tidur
     _buildBedroomZone(rooms, bX, yV, bW, zV, beds, v);
 
-    // Service
+    // Zona Servis
     final double kitW = _clamp(bW * 0.32, 2.2, 3.8);
     final double dinW = v == 3 ? 0 : _clamp(bW * 0.28, 2.0, 3.4);
     final double bathW= _clamp(bW * 0.18, 1.5, 2.4);
@@ -426,7 +461,7 @@ class SmartFloorPlanEngine {
     final double yM = bY + zB;
     final double yF = bY + zB + zM;
 
-    // Front – carport (v0/v2 kiri, v1/v3 kanan)
+    // Zona Depan – carport (v0/v2 kiri, v1/v3 kanan)
     final double cpW  = _clamp(bW * 0.30, 2.6, 3.6);
     final bool   cpR  = (v == 1 || v == 3);
     final double cpX  = cpR ? bX + bW - cpW : bX;
@@ -438,7 +473,7 @@ class SmartFloorPlanEngine {
     _add(rooms, nama:'Ruang Tamu',  cat:'living',  x:pubX+pubW*0.36, y:yF, w:pubW*0.64, h:zF);
     _add(rooms, nama:'Taman Depan', cat:'outdoor', x:bX, y:yF+zF, w:bW, h:taman);
 
-    // Middle – keluarga + taman samping
+    // Zona Tengah – ruang keluarga + taman samping
     final double famW = bW * _pick(v, [0.68, 0.72, 0.65, 0.70]);
     final double garW = bW - famW;
     final bool   garR = (v == 0 || v == 2);
@@ -446,7 +481,7 @@ class SmartFloorPlanEngine {
     _add(rooms, nama:'R. Keluarga',   cat:'family',  x:garR?bX+garW:bX, y:yM, w:famW, h:zM);
     _add(rooms, nama:'Taman Samping', cat:'outdoor', x:garR?bX:bX+famW, y:yM+zM*0.12, w:garW, h:zM*0.88);
 
-    // Back – kamar + dapur + km
+    // Zona Belakang – kamar tidur + dapur + km/wc
     _buildBedroomZone(rooms, bX, yB, bW, zB, beds, v);
 
     _add(rooms, nama:'Taman Belakang', cat:'outdoor', x:bX, y:0, w:bW, h:backYd);
@@ -456,7 +491,7 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  TIER 4 – LARGE  (> 140 m²)
+  //  TINGKAT 4 – BESAR (LARGE)  (> 140 m²)
   // ═══════════════════════════════════════════════════════════════════════════
 
   static List<RoomModel> _largeNarrow(
@@ -489,7 +524,7 @@ class SmartFloorPlanEngine {
     final double yP = bY + zS + zV;
     final double yF = bY + zS + zV + zP;
 
-    // Front
+    // Zona Depan
     final double cpW  = _clamp(bW * 0.28, 3.0, 4.2);
     final double terW = _clamp(bW * 0.22, 2.0, 3.2);
     _add(rooms, nama:'Carport',     cat:'outdoor', x:bX,          y:yF, w:cpW,           h:zF);
@@ -497,7 +532,7 @@ class SmartFloorPlanEngine {
     _add(rooms, nama:'Ruang Tamu',  cat:'living',  x:bX+cpW+terW, y:yF, w:bW-cpW-terW,  h:zF);
     _add(rooms, nama:'Taman Depan', cat:'outdoor', x:bX,          y:yF+zF, w:bW,         h:taman);
 
-    // Public
+    // Zona Publik
     final double famW = v == 1 ? bW : _clamp(bW * 0.58, 4.6, bW-2.8);
     final double voidW = bW - famW;
 
@@ -516,7 +551,7 @@ class SmartFloorPlanEngine {
            cat:v==2?'bedroom':'room', x:bX+famW-wW, y:yP+zP*0.55, w:wW, h:zP*0.45);
     }
 
-    // Private – kamar dengan koridor
+    // Zona Privat – kamar tidur dengan koridor
     final double mW  = _clamp(bW * 0.36, 3.4, 4.8);
     final double corW= _clamp(bW * 0.12, 1.0, 1.6);
     final double rW  = bW - mW - corW;
@@ -528,7 +563,7 @@ class SmartFloorPlanEngine {
     _add(rooms, nama:'K. Tidur 1',     cat:'bedroom', x:bX+mW+corW, y:yV, w:rW, h:spH);
     _add(rooms, nama:'K. Tidur 2',     cat:'bedroom', x:bX+mW+corW, y:yV+spH, w:rW, h:spH);
 
-    // Service
+    // Zona Servis
     final double kitW  = _clamp(bW * 0.30, 3.0, 4.4);
     final double dinW  = _clamp(bW * 0.26, 2.6, 4.0);
     final double bathW = _clamp(bW * 0.16, 1.6, 2.4);
@@ -581,7 +616,7 @@ class SmartFloorPlanEngine {
     _add(rooms, nama:'Ruang Tamu',  cat:'living',  x:bX+lW+cW, y:yF, w:rW, h:zF);
     _add(rooms, nama:'Taman Depan', cat:'outdoor', x:bX,        y:yF+zF, w:bW, h:taman);
 
-    // Public
+    // Zona Publik
     final double famStartX = v == 1 ? bX : bX + lW;
     final double famW2     = v == 1 ? bW : cW + rW;
     _add(rooms, nama:'R. Keluarga', cat:'family', x:famStartX, y:yP, w:famW2, h:zP);
@@ -596,7 +631,7 @@ class SmartFloorPlanEngine {
       _add(rooms, nama:'R. Makan', cat:'dining', x:bX+lW+cW, y:yP, w:rW, h:dinH);
     }
 
-    // Private
+    // Zona Privat
     final double spH = zV / 2;
     _add(rooms, nama:'K. Tidur Utama', cat:'bedroom', x:bX,      y:yV, w:lW, h:spH);
     _add(rooms, nama:'KM Utama',       cat:'bath',    x:bX,      y:yV+spH, w:lW, h:spH);
@@ -605,7 +640,7 @@ class SmartFloorPlanEngine {
     if (beds >= 4)
       _add(rooms, nama:'K. Tidur 3', cat:'bedroom', x:bX+lW+cW, y:yV, w:rW, h:spH);
 
-    // Service di zone private kanan bawah jika beds < 4
+    // Zona Servis di area privat kanan bawah jika beds < 4
     if (beds < 4) {
       _add(rooms, nama:'Dapur', cat:'kitchen', x:bX+lW+cW, y:yV, w:rW*0.55, h:spH);
       _add(rooms, nama:'KM/WC', cat:'bath',    x:bX+lW+cW+rW*0.55, y:yV, w:rW*0.45, h:spH);
@@ -620,10 +655,10 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  SHARED: bedroom zone builder
+  //  BERSAMA: pembangun zona kamar tidur
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Tempatkan kamar tidur + km/wc + dapur dalam satu zona
+  /// Menempatkan kamar tidur + km/wc + dapur dalam satu zona
   static void _buildBedroomZone(
     List<RoomModel> rooms,
     double bX, double yZone, double bW, double zH,
@@ -660,7 +695,7 @@ class SmartFloorPlanEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  HELPERS
+  //  FUNGSI BANTU (HELPERS)
   // ═══════════════════════════════════════════════════════════════════════════
 
   static void _placeExtra(
@@ -721,7 +756,158 @@ class SmartFloorPlanEngine {
     return v.clamp(mn, mx).toDouble();
   }
 
-  /// Pilih nilai dari list berdasarkan index variant
-  static double _pick(int v, List<double> options) =>
-      options[v.clamp(0, options.length - 1)];
+  /// Pilih nilai dari list berdasarkan index variant.
+  ///
+  /// PERUBAHAN: sebelumnya fungsi ini hanya mengembalikan angka statis dari
+  /// tabel `options[v]`, sehingga dengan lahan yang sama, proporsi ruang
+  /// (lebar teras, tinggi zona, dst) akan SELALU identik setiap generate.
+  /// Itulah sebab utama "hasil generate monoton" yang dikeluhkan.
+  ///
+  /// Sekarang: nilai dasar tetap diambil dari tabel yang sudah dirancang
+  /// arsitek (masih dalam rentang aman/valid — aturan dasar tidak hilang),
+  /// tapi kemudian di-blend secara acak menuju salah satu opsi valid lain
+  /// + diberi jitter halus (±15% dari rentang tabel). Hasilnya proporsi
+  /// ruang jadi kontinu/hampir tak terbatas variasinya, bukan cuma 4 nilai
+  /// tetap, walau tetap dibatasi rentang yang sudah teruji oleh aturan
+  /// arsitektur yang ada (min/max lewat _clamp & _add tetap berlaku).
+  static double _pick(int v, List<double> options) {
+    final double base = options[v.clamp(0, options.length - 1)];
+    final math.Random? rng = _activeRng;
+    if (rng == null || options.length < 2) return base;
+
+    // Blend menuju opsi valid lain (masih dari rule yang sama) → variasi
+    // tetap "rules based", bukan angka sembarangan di luar rancangan.
+    final double other = options[rng.nextInt(options.length)];
+    final double blendT = rng.nextDouble() * 0.5; // maksimal 50% menuju opsi lain
+    final double blended = base + (other - base) * blendT;
+
+    // Jitter halus supaya dua hasil generate dengan variant sama pun masih
+    // sedikit berbeda (menghindari kesan "pola selalu sama").
+    final double lo = options.reduce(math.min);
+    final double hi = options.reduce(math.max);
+    final double span = hi - lo;
+    final double jitter = span > 0 ? (rng.nextDouble() - 0.5) * span * 0.15 : 0.0;
+
+    return blended + jitter;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  ORIENTASI / MIRRORING  (mengatasi: posisi ruang tidak pernah berubah)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Mencerminkan seluruh denah secara horizontal (kiri↔kanan) dan/atau
+  /// vertikal (depan↔belakang atas↔bawah) tanpa mengubah adjacency
+  /// (hubungan antar ruang tetap terjaga — yang berubah hanya arah hadap
+  /// keseluruhan bangunan terhadap lahan).
+  ///
+  /// Ini secara langsung menjawab keluhan "ruang tamu selalu di depan
+  /// kanan, dapur selalu di belakang kiri, kamar selalu di posisi yang
+  /// sama": dengan mirrorX/mirrorY yang dipilih acak setiap generate,
+  /// posisi relatif tiap ruang terhadap sisi lahan ikut berpindah.
+  static List<RoomModel> _applyOrientation(
+    List<RoomModel> rooms,
+    double W, double L,
+    bool mirrorX, bool mirrorY,
+  ) {
+    if (!mirrorX && !mirrorY) return rooms;
+    return rooms.map((r) {
+      final double newX = mirrorX ? (W - r.x - r.width) : r.x;
+      final double newY = mirrorY ? (L - r.y - r.height) : r.y;
+      return RoomModel(
+        nama: r.nama,
+        category: r.category,
+        x: newX,
+        y: newY,
+        width: r.width,
+        height: r.height,
+      );
+    }).toList();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  SARAN PENEMPATAN PINTU  (rules-based, berdasarkan adjacency ruang)
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // CATATAN PENTING: RoomModel & CustomPainter TIDAK diubah (sesuai
+  // permintaan), sehingga fungsi ini TIDAK menulis pintu langsung ke dalam
+  // model. Fungsi ini murni logika Rules Based tambahan yang menghitung sisi
+  // dinding mana yang paling layak untuk pintu setiap ruang, berdasarkan
+  // ruang apa yang bersebelahan di sisi tersebut:
+  //   • Diprioritaskan menghadap ruang sirkulasi/publik (living, family,
+  //     service, outdoor) — bukan ke ruang privat lain secara acak.
+  //   • Pintu KM/WC dihindari menghadap langsung ke ruang tamu/ruang makan
+  //     kalau masih ada sisi lain yang bersebelahan dengan ruang lain.
+  // Untuk benar-benar menggambar pintu di UI, hasil Map ini tinggal
+  // dikonsumsi oleh CustomPainter (menunjuk sisi 'front'/'back'/'left'/
+  // 'right' pada tiap ruang) — bagian itu di luar lingkup file ini.
+  static Map<String, String> suggestDoorPlacements(List<RoomModel> rooms) {
+    const Set<String> circulationCats = {'living', 'family', 'service', 'outdoor'};
+    final Map<String, String> result = {};
+
+    for (final r in rooms) {
+      String bestSide = 'front';
+      double bestScore = -999;
+
+      for (final side in const ['front', 'back', 'left', 'right']) {
+        final RoomModel? n = _findNeighbor(rooms, r, side);
+        if (n == null) continue;
+
+        double score = circulationCats.contains(n.category) ? 2.0 : 1.0;
+
+        // Hindari KM/WC membuka langsung ke ruang tamu / ruang makan
+        // selagi masih ada alternatif sisi lain yang lebih layak.
+        if (r.category == 'bath' &&
+            (n.category == 'living' || n.category == 'dining')) {
+          score -= 1.5;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestSide = side;
+        }
+      }
+      result[r.nama] = bestSide;
+    }
+    return result;
+  }
+
+  /// Cari ruang tetangga yang berbatasan langsung pada sisi tertentu
+  /// (front/back/left/right) dari ruang `target`. Konvensi sumbu-Y pada
+  /// engine ini: nilai y lebih besar = lebih ke arah depan lahan.
+  static RoomModel? _findNeighbor(List<RoomModel> rooms, RoomModel target, String side) {
+    const double eps = 0.05;
+    for (final r in rooms) {
+      if (identical(r, target)) continue;
+      switch (side) {
+        case 'right':
+          if ((r.x - (target.x + target.width)).abs() < eps &&
+              _overlap1D(r.y, r.y + r.height, target.y, target.y + target.height)) {
+            return r;
+          }
+          break;
+        case 'left':
+          if ((target.x - (r.x + r.width)).abs() < eps &&
+              _overlap1D(r.y, r.y + r.height, target.y, target.y + target.height)) {
+            return r;
+          }
+          break;
+        case 'front':
+          if ((r.y - (target.y + target.height)).abs() < eps &&
+              _overlap1D(r.x, r.x + r.width, target.x, target.x + target.width)) {
+            return r;
+          }
+          break;
+        case 'back':
+          if ((target.y - (r.y + r.height)).abs() < eps &&
+              _overlap1D(r.x, r.x + r.width, target.x, target.x + target.width)) {
+            return r;
+          }
+          break;
+      }
+    }
+    return null;
+  }
+
+  static bool _overlap1D(double a0, double a1, double b0, double b1) =>
+      a0 < b1 - 0.01 && b0 < a1 - 0.01;
 }
