@@ -4,10 +4,11 @@ class RoomModel {
   double y;
   double width;
   double height;
-
-  String category;
-  String doorSide;
-  bool isOutdoor;
+  
+String category;
+String doorSide;
+bool isOutdoor;
+double rotation;
 
   RoomModel({
     required this.nama,
@@ -15,33 +16,36 @@ class RoomModel {
     required this.y,
     required this.width,
     required this.height,
-    this.category = 'room',
+   this.category = 'room',
     this.doorSide = 'bottom',
     this.isOutdoor = false,
+    this.rotation = 0,
   });
 
   double get area => width * height;
 
   RoomModel copyWith({
-    String? nama,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    String? category,
-    String? doorSide,
-    bool? isOutdoor,
-  }) {
+  String? nama,
+  double? x,
+  double? y,
+  double? width,
+  double? height,
+  String? category,
+  String? doorSide,
+  bool? isOutdoor,
+  double? rotation,
+}){
     return RoomModel(
-      nama: nama ?? this.nama,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      category: category ?? this.category,
-      doorSide: doorSide ?? this.doorSide,
-      isOutdoor: isOutdoor ?? this.isOutdoor,
-    );
+  nama: nama ?? this.nama,
+  x: x ?? this.x,
+  y: y ?? this.y,
+  width: width ?? this.width,
+  height: height ?? this.height,
+  category: category ?? this.category,
+  doorSide: doorSide ?? this.doorSide,
+  isOutdoor: isOutdoor ?? this.isOutdoor,
+  rotation: rotation ?? this.rotation,
+);
   }
 
   factory RoomModel.fromJson(Map<String, dynamic> json) {

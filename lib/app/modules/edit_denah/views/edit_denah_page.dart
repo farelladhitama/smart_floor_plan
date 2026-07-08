@@ -66,6 +66,7 @@ class _EditDenahPageState extends State<EditDenahPage> {
             y: room.y,
             width: room.width,
             height: room.height,
+            rotation: room.rotation,
           ),
         )
         .toList();
@@ -132,6 +133,7 @@ class _EditDenahPageState extends State<EditDenahPage> {
               y: room.y,
               width: room.width,
               height: room.height,
+              rotation: room.rotation,
             ),
           )
           .toList();
@@ -151,6 +153,7 @@ class _EditDenahPageState extends State<EditDenahPage> {
                 y: room.y,
                 width: room.width,
                 height: room.height,
+                rotation: room.rotation,
               ),
             )
             .toList();
@@ -591,7 +594,7 @@ class _EditDenahPageState extends State<EditDenahPage> {
             child: Text(
               _selectedIndex == null
                   ? 'Pilih salah satu ruang pada denah. Setelah dipilih, drag ruang untuk mengatur posisi layout.'
-                  : 'Ruang sedang dipilih. Drag pada area denah untuk menggeser posisi ruang, gunakan panel ukuran, atau rotasi 90°.',
+                  : 'Ruang sedang dipilih. Drag pada area denah untuk menggeser posisi ruang, gunakan panel ukuran, atau   90°.',
               style: const TextStyle(
                 color: Color(0xFF7A4A1F),
                 fontWeight: FontWeight.w600,
@@ -732,10 +735,46 @@ class _EditDenahPageState extends State<EditDenahPage> {
             ],
           ),
           const SizedBox(height: 10),
-         _quickResizeButton(
-  label: 'Rotasi Ruangan 90°',
-  icon: Icons.rotate_90_degrees_ccw_rounded,
-  onTap: _rotateSelectedRoom,
+        _buildRotationSlider(selectedRoom),
+        const SizedBox(height: 10),
+        Row(
+  children: [
+    Expanded(
+      child: _quickResizeButton(
+        label: '-15°',
+        icon: Icons.rotate_left,
+        onTap: () => _rotateSelectedRoom(-15),
+      ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: _quickResizeButton(
+        label: '+15°',
+        icon: Icons.rotate_right,
+        onTap: () => _rotateSelectedRoom(15),
+      ),
+    ),
+  ],
+),
+const SizedBox(height: 10),
+Row(
+  children: [
+    Expanded(
+      child: _quickResizeButton(
+        label: 'Putar 90°',
+        icon: Icons.rotate_90_degrees_cw_rounded,
+        onTap: () => _rotateSelectedRoom(90),
+      ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: _quickResizeButton(
+        label: 'Reset 0°',
+        icon: Icons.restart_alt_rounded,
+        onTap: () => _setRoomRotation(0),
+      ),
+    ),
+  ],
 ),
 
 const SizedBox(height: 14),
@@ -771,6 +810,56 @@ Row(
     ),
   );
 }
+
+  Widget _buildRotationSlider(RoomModel selectedRoom) {
+    final double currentRotation = selectedRoom.rotation % 360;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Rotasi Ruang (360°)',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: textDark,
+                ),
+              ),
+            ),
+            Text(
+              '${currentRotation.toStringAsFixed(0)}°',
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: orange,
+              ),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: orange,
+            inactiveTrackColor: const Color(0xFFE3E9F0),
+            thumbColor: orange,
+            overlayColor: orange.withOpacity(0.15),
+            trackHeight: 4,
+          ),
+          child: Slider(
+            value: currentRotation,
+            min: 0,
+            max: 360,
+            divisions: 360,
+            label: '${currentRotation.toStringAsFixed(0)}°',
+            onChangeStart: (_) => _saveHistory(),
+            onChanged: (value) => _setRoomRotation(value, recordHistory: false),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _resizeRow({
     required String title,
@@ -916,54 +1005,52 @@ Row(
           _saveHistory();
 
     setState(() {
-      _rooms[_selectedIndex!] = RoomModel(
-        nama: oldRoom.nama,
-        category: oldRoom.category,
-        x: oldRoom.x,
-        y: oldRoom.y,
-        width: newWidth,
-        height: newHeight,
-      );
+     _rooms[_selectedIndex!] = RoomModel(
+  nama: oldRoom.nama,
+  category: oldRoom.category,
+  x: oldRoom.x,
+  y: oldRoom.y,
+  width: newWidth,
+  height: newHeight,
+  rotation: oldRoom.rotation,
+);
     });
   }
 
-  void _rotateSelectedRoom() {
-    if (_selectedIndex == null) return;
-    if (_selectedIndex! < 0 || _selectedIndex! >= _rooms.length) return;
+void _rotateSelectedRoom(double angle) {
+  if (_selectedIndex == null) return;
+  if (_selectedIndex! < 0 || _selectedIndex! >= _rooms.length) return;
 
-    final double safeLandWidth = _landWidth <= 0 ? 1 : _landWidth;
-    final double safeLandLength = _landLength <= 0 ? 1 : _landLength;
+  _saveHistory();
 
-    final RoomModel oldRoom = _rooms[_selectedIndex!];
+  final room = _rooms[_selectedIndex!];
+  // Modulo di Dart selalu menghasilkan nilai non-negatif untuk pembagi
+  // positif, jadi hasilnya otomatis berada di rentang 0-359.9° meskipun
+  // angle bernilai negatif (mis. tombol -15°).
+  final double newRotation = (room.rotation + angle) % 360;
 
-    final double rotatedWidth = oldRoom.height;
-    final double rotatedHeight = oldRoom.width;
+  setState(() {
+    _rooms[_selectedIndex!] = room.copyWith(rotation: newRotation);
+  });
+}
 
-    double newX = oldRoom.x;
-    double newY = oldRoom.y;
+/// Mengatur rotasi ruangan langsung ke sudut tertentu (0-360°).
+/// Dipakai oleh slider rotasi penuh dan tombol reset.
+void _setRoomRotation(double angle, {bool recordHistory = true}) {
+  if (_selectedIndex == null) return;
+  if (_selectedIndex! < 0 || _selectedIndex! >= _rooms.length) return;
 
-    if (newX + rotatedWidth > safeLandWidth) {
-      newX = math.max(0, safeLandWidth - rotatedWidth);
-    }
-
-    if (newY + rotatedHeight > safeLandLength) {
-      newY = math.max(0, safeLandLength - rotatedHeight);
-    }
-
+  if (recordHistory) {
     _saveHistory();
-
-    setState(() {
-      _rooms[_selectedIndex!] = RoomModel(
-        nama: oldRoom.nama,
-        category: oldRoom.category,
-        x: newX,
-        y: newY,
-        width: rotatedWidth,
-        height: rotatedHeight,
-      );
-    });
   }
 
+  final room = _rooms[_selectedIndex!];
+  final double normalized = angle % 360;
+
+  setState(() {
+    _rooms[_selectedIndex!] = room.copyWith(rotation: normalized);
+  });
+}
   Widget _buildBottomAction() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
@@ -1170,13 +1257,14 @@ Row(
 
     setState(() {
       _rooms[index] = RoomModel(
-        nama: oldRoom.nama,
-        category: oldRoom.category,
-        x: newX,
-        y: newY,
-        width: oldRoom.width,
-        height: oldRoom.height,
-      );
+  nama: oldRoom.nama,
+  category: oldRoom.category,
+  x: newX,
+  y: newY,
+  width: oldRoom.width,
+  height: oldRoom.height,
+  rotation: oldRoom.rotation,
+);
     });
   }
 }
@@ -1280,11 +1368,6 @@ class _EditSelectionPainter extends CustomPainter {
         oldDelegate.rooms != rooms ||
         oldDelegate.landWidth != landWidth ||
         oldDelegate.landLength != landLength;
+        
   }
 }
-
-
-
-
-
-

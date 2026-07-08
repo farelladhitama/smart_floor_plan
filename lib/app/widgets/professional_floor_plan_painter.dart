@@ -68,41 +68,81 @@ class ProfessionalFloorPlanPainter extends CustomPainter {
 
     for (final RoomModel room in outdoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawOutdoorArea(canvas, rect, room);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawOutdoorArea(canvas, rect, room),
+      );
     }
 
     for (final RoomModel room in indoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawRoomDropShadow(canvas, rect);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawRoomDropShadow(canvas, rect),
+      );
     }
 
     for (final RoomModel room in indoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawIndoorFloor(canvas, rect, room);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawIndoorFloor(canvas, rect, room),
+      );
     }
 
     for (final RoomModel room in rooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawRoomWall(canvas, rect, room);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawRoomWall(canvas, rect, room),
+      );
     }
 
     for (final RoomModel room in indoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawWindows(canvas, rect, plotRect);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawWindows(canvas, rect, plotRect),
+      );
     }
 
     for (final RoomModel room in indoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawDoor(canvas, rect, plotRect, room);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawDoor(canvas, rect, plotRect, room),
+      );
     }
     // Object outdoor bawaan dimatikan karena sekarang memakai asset image overlay.
     for (final RoomModel room in indoorRooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawFurniture(canvas, rect, room);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawFurniture(canvas, rect, room),
+      );
     }
 for (final RoomModel room in rooms) {
       final Rect rect = _roomToRect(room, plotRect);
-      _drawCleanLabel(canvas, rect, room);
+      _withRoomRotation(
+        canvas,
+        rect,
+        room,
+        () => _drawCleanLabel(canvas, rect, room),
+      );
     }
 
     _drawPlotBorder(canvas, plotRect);
@@ -144,6 +184,31 @@ for (final RoomModel room in rooms) {
       math.max(0, room.width * scaleX),
       math.max(0, room.height * scaleY),
     );
+  }
+
+  /// Menjalankan [draw] dengan canvas yang sudah dirotasi sebesar
+  /// [room.rotation] derajat di sekitar titik pusat [rect]. Dipakai supaya
+  /// setiap elemen ruangan (lantai, dinding, jendela, pintu, furnitur, label)
+  /// ikut berputar mengikuti rotasi yang diatur lewat panel edit.
+  void _withRoomRotation(
+    Canvas canvas,
+    Rect rect,
+    RoomModel room,
+    void Function() draw,
+  ) {
+    final double rotation = room.rotation % 360;
+
+    if (rotation == 0) {
+      draw();
+      return;
+    }
+
+    canvas.save();
+    canvas.translate(rect.center.dx, rect.center.dy);
+    canvas.rotate(rotation * math.pi / 180);
+    canvas.translate(-rect.center.dx, -rect.center.dy);
+    draw();
+    canvas.restore();
   }
 
   bool _isOutdoor(String name, String category) {
@@ -1910,7 +1975,8 @@ for (final RoomModel room in rooms) {
           oldRoom.x != newRoom.x ||
           oldRoom.y != newRoom.y ||
           oldRoom.width != newRoom.width ||
-          oldRoom.height != newRoom.height) {
+          oldRoom.height != newRoom.height ||
+          oldRoom.rotation != newRoom.rotation) {
         return true;
       }
     }
@@ -1918,10 +1984,3 @@ for (final RoomModel room in rooms) {
     return false;
   }
 }
-
-
-
-
-
-
-

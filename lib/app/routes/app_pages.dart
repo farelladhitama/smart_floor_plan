@@ -36,6 +36,7 @@ import '../modules/scan_denah/bindings/scan_denah_binding.dart';
 import 'package:smart_floor_plan/app/modules/activity_log/views/activity_log_page.dart';
 import 'package:smart_floor_plan/app/modules/activity_log/bindings/activity_log_binding.dart';
 
+
 class AppPages {
     static String get initial {
     final String url = Uri.base.toString();
@@ -77,6 +78,8 @@ class AppPages {
       page: () => const LoginScreen(),
       binding: LoginBinding(),
     ),
+    // Tambahkan di daftar routes
+
     GetPage(
       name: AppRoutes.register,
       page: () => const RegisterScreen(),

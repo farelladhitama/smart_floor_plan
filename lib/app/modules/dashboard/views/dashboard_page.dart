@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
 import 'package:smart_floor_plan/app/modules/riwayat/views/riwayat_page.dart';
 import 'package:smart_floor_plan/app/modules/profile/controllers/profile_controller.dart';
+import 'package:smart_floor_plan/app/modules/analysis/views/analysis_page.dart'; 
 
 import '../controllers/dashboard_controller.dart';
 
@@ -22,19 +23,23 @@ class DashboardPage extends GetView<DashboardController> {
 
     return Get.put(ProfileController());
   }
-
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
       body: Obx(() {
         final index = controller.selectedIndex.value;
 
+        // ✅ TAMBAHKAN UNTUK ANALISIS
         if (index == 1) {
-          return const RiwayatPage();
+          return const AnalysisPage();
         }
 
         if (index == 2) {
+          return const RiwayatPage();
+        }
+
+        if (index == 3) {
           return _buildProfilePage();
         }
 
@@ -637,6 +642,10 @@ class DashboardPage extends GetView<DashboardController> {
               icon: Icon(Icons.dashboard_rounded),
               label: 'Beranda',
             ),
+            BottomNavigationBarItem(
+      icon: Icon(Icons.analytics), // ✅ TAMBAHKAN INI
+      label: 'Analisis',
+    ),
             BottomNavigationBarItem(
               icon: Icon(Icons.history_rounded),
               label: 'Riwayat',

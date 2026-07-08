@@ -26,6 +26,7 @@ class FloorplanService {
 
       RoomModel(
         nama: "Ruang Tamu",
+        category: 'room',
 
         x: 0,
         y: 0,
@@ -40,6 +41,7 @@ class FloorplanService {
 
       RoomModel(
         nama: "Dapur",
+        category: 'room',
 
         x: rumahWidth * 0.55,
         y: 0,
@@ -56,6 +58,7 @@ class FloorplanService {
 
         RoomModel(
           nama: "Kamar ${i + 1}",
+          category: 'room',
 
           x: 0,
           y: 120 + (i * 90),
