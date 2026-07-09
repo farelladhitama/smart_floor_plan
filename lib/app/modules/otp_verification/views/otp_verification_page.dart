@@ -375,7 +375,7 @@ class _OtpInput extends StatelessWidget {
         letterSpacing: isSmallPhone ? 4.5 : 6.5,
       ),
       decoration: InputDecoration(
-        hintText: '00000000',
+        hintText: '000000',
         hintStyle: TextStyle(
           color: const Color(0xFFC8D0D9),
           fontSize: isSmallPhone ? 21 : 23,

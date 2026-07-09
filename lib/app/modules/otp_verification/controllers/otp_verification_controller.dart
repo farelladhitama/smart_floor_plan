@@ -8,7 +8,7 @@ import 'package:smart_floor_plan/app/routes/app_routes.dart';
 
 class OtpVerificationController extends GetxController {
   static const String otpVerifiedKey = 'login_otp_verified';
-  static const int otpLength = 8;
+  static const int otpLength = 6;
 
   static const Color navy = Color(0xFF0D1B2A);
   static const Color orange = Color(0xFFE47B3E);
@@ -114,13 +114,10 @@ class OtpVerificationController extends GetxController {
       return;
     }
 
-    if (otp.length != otpLength) {
-      showMessage(
-        'Kode OTP Tidak Valid',
-        'Kode OTP harus terdiri dari $otpLength angka.',
-      );
-      return;
-    }
+    if (otp.length != otpLength) {  // 6
+  showMessage('Kode OTP Tidak Valid', 'Kode OTP harus terdiri dari $otpLength angka.');
+  return;
+}
 
     try {
       isVerifying.value = true;
