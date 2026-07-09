@@ -281,10 +281,10 @@ class ScanDenahController extends GetxController {
       final double imageHeight = _toDouble(data['image_height']);
       final List roomsJson = data['rooms'] ?? [];
 
-      _setLandSizeFromImageRatio(
-        imageWidth: imageWidth,
-        imageHeight: imageHeight,
-      );
+     // _setLandSizeFromImageRatio(
+//   imageWidth: imageWidth,
+//   imageHeight: imageHeight,
+// );
 
       final List<RoomModel> rawRooms = roomsJson.map<RoomModel>((item) {
         return RoomModel(

@@ -58,6 +58,8 @@ class ScanDenahPage extends GetView<ScanDenahController> {
                     SizedBox(height: isMobile ? 16 : 20),
                     _buildImageCard(isMobile),
                     SizedBox(height: isMobile ? 16 : 20),
+                    _buildDimensionInput(isMobile), // ✅ TAMBAHKAN INI
+                    SizedBox(height: isMobile ? 16 : 20),
                     _buildResultCard(isMobile),
                     SizedBox(height: isMobile ? 16 : 20),
                     _buildMaterialSection(isMobile),
@@ -124,6 +126,190 @@ class ScanDenahPage extends GetView<ScanDenahController> {
               fontWeight: FontWeight.w500,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== DIMENSION INPUT ====================
+  Widget _buildDimensionInput(bool isMobile) {
+    final lebarController = TextEditingController(
+      text: controller.scanLandWidth.value.toString(),
+    );
+    final panjangController = TextEditingController(
+      text: controller.scanLandLength.value.toString(),
+    );
+
+    lebarController.addListener(() {
+      final value = double.tryParse(lebarController.text.replaceAll(',', '.'));
+      if (value != null && value > 0) {
+        controller.scanLandWidth.value = value;
+      }
+    });
+
+    panjangController.addListener(() {
+      final value = double.tryParse(panjangController.text.replaceAll(',', '.'));
+      if (value != null && value > 0) {
+        controller.scanLandLength.value = value;
+      }
+    });
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 14 : 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(isMobile ? 22 : 26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.045),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: isMobile ? 38 : 42,
+                height: isMobile ? 38 : 42,
+                decoration: BoxDecoration(
+                  color: softGrey,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.straighten_rounded,
+                  color: navy,
+                  size: isMobile ? 21 : 23,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Ukuran Lahan',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: isMobile ? 18 : 21,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lebar (m)',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: isMobile ? 12 : 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      keyboardType: TextInputType.number,
+                      controller: lebarController,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: background,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        suffixText: 'm',
+                        suffixStyle: TextStyle(
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Panjang (m)',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: isMobile ? 12 : 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      keyboardType: TextInputType.number,
+                      controller: panjangController,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: background,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        suffixText: 'm',
+                        suffixStyle: TextStyle(
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            final luas = controller.scanLandWidth.value *
+                controller.scanLandLength.value;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.calculate_rounded,
+                    size: 16,
+                    color: orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Luas: ${luas.toStringAsFixed(1)} m²',
+                    style: TextStyle(
+                      color: orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 13 : 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -426,7 +612,6 @@ class ScanDenahPage extends GetView<ScanDenahController> {
       );
     });
   }
-
 
   Widget _buildMaterialSection(bool isMobile) {
     return Obx(() {
@@ -856,5 +1041,4 @@ class ScanDenahPage extends GetView<ScanDenahController> {
       ),
     );
   }
-
-}
+} 

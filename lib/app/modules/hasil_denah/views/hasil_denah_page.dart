@@ -39,6 +39,60 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
   static const Color textDark = Color(0xFF102033);
   static const Color textSoft = Color(0xFF6B7A90);
 
+  // ==================== LAND SIZE INFO ====================
+  Widget _buildLandSizeInfo() {
+    double lebar = 0;
+    double panjang = 0;
+    
+    // Coba dari widget
+    if (widget.inputLebarRumah != null && widget.inputPanjangRumah != null) {
+      lebar = _toDouble(widget.inputLebarRumah, fallback: 0);
+      panjang = _toDouble(widget.inputPanjangRumah, fallback: 0);
+    } else {
+      // Coba dari Get.arguments
+      final args = Get.arguments;
+      if (args is Map) {
+        lebar = _toDouble(args['lebar_lahan'] ?? args['inputLebarRumah'] ?? 0, fallback: 0);
+        panjang = _toDouble(args['panjang_lahan'] ?? args['inputPanjangRumah'] ?? 0, fallback: 0);
+      }
+    }
+    
+    // Jika tidak ada ukuran, jangan tampilkan
+    if (lebar <= 0 || panjang <= 0) {
+      return const SizedBox.shrink();
+    }
+    
+    final luas = lebar * panjang;
+    
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F4FD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB3D9F7)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.straighten_rounded,
+            color: Color(0xFF0D1B2A),
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Ukuran Lahan: ${lebar.toStringAsFixed(1)} m × ${panjang.toStringAsFixed(1)} m  |  Luas: ${luas.toStringAsFixed(1)} m²',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Color(0xFF0D1B2A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HasilDenahController>(
@@ -70,29 +124,29 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
             ),
           ),
           floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 86),
-        child: FloatingActionButton.extended(
-          heroTag: 'rab_hasil_denah',
-          backgroundColor: const Color(0xFFE47B3E),
-          foregroundColor: Colors.white,
-          elevation: 8,
-          onPressed: () {
-            Get.toNamed(
-              AppRoutes.rab,
-              arguments: Get.arguments,
-            );
-          },
-          icon: const Icon(Icons.receipt_long_rounded),
-          label: const Text(
-            'LIHAT RAB',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
+            padding: const EdgeInsets.only(bottom: 86),
+            child: FloatingActionButton.extended(
+              heroTag: 'rab_hasil_denah',
+              backgroundColor: const Color(0xFFE47B3E),
+              foregroundColor: Colors.white,
+              elevation: 8,
+              onPressed: () {
+                Get.toNamed(
+                  AppRoutes.rab,
+                  arguments: Get.arguments,
+                );
+              },
+              icon: const Icon(Icons.receipt_long_rounded),
+              label: const Text(
+                'LIHAT RAB',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: SafeArea(
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          body: SafeArea(
             child: Column(
               children: [
                 Expanded(
@@ -159,7 +213,10 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPreviewHeader(),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          // ✅ TAMBAHKAN INI - TAMPILAN UKURAN LAHAN
+          _buildLandSizeInfo(),
+          const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Container(
@@ -190,8 +247,6 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
                               ),
                             ),
                           ),
-
-                          // Overlay asset realistis: bed, sofa, toilet, car, tree, dll.
                           Positioned.fill(
                             child: FloorPlanAssetOverlay(
                               rooms: rooms,
@@ -343,7 +398,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
             Expanded(
               child: _infoBox(
                 icon: Icons.square_foot_rounded,
-                label: '${landArea.toStringAsFixed(1)} m2',
+                label: '${landArea.toStringAsFixed(1)} m²',
                 subtitle: 'Luas lahan',
               ),
             ),
@@ -351,7 +406,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
             Expanded(
               child: _infoBox(
                 icon: Icons.home_rounded,
-                label: '${buildingArea.toStringAsFixed(1)} m2',
+                label: '${buildingArea.toStringAsFixed(1)} m²',
                 subtitle: 'Luas ruang',
               ),
             ),
@@ -648,67 +703,70 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
   }
 
   dynamic _readRawRooms(dynamic controller) {
-  if (widget.rooms.isNotEmpty) {
-    return widget.rooms;
+    if (widget.rooms.isNotEmpty) {
+      return widget.rooms;
+    }
+
+    return _tryRead(() => controller.rooms) ??
+        _tryRead(() => controller.roomList) ??
+        _tryRead(() => controller.generatedRooms) ??
+        _tryRead(() => controller.hasilRooms) ??
+        _tryRead(() => controller.denahRooms) ??
+        _tryRead(() {
+          final dynamic args = Get.arguments;
+          if (args is Map) return args['rooms'];
+          return null;
+        });
   }
 
-  return _tryRead(() => controller.rooms) ??
-      _tryRead(() => controller.roomList) ??
-      _tryRead(() => controller.generatedRooms) ??
-      _tryRead(() => controller.hasilRooms) ??
-      _tryRead(() => controller.denahRooms) ??
-      _tryRead(() {
-        final dynamic args = Get.arguments;
-        if (args is Map) return args['rooms'];
-        return null;
-      });
-}
   double _getLandWidth(dynamic controller) {
-  if (widget.inputLebarRumah != null) {
-    return _toDouble(widget.inputLebarRumah, fallback: 8);
+    if (widget.inputLebarRumah != null) {
+      return _toDouble(widget.inputLebarRumah, fallback: 8);
+    }
+
+    return _toDouble(
+      _tryRead(() => controller.inputLebarRumah) ??
+          _tryRead(() => controller.landWidth) ??
+          _tryRead(() => controller.lebarRumah) ??
+          _tryRead(() => controller.lebarLahan) ??
+          _tryRead(() {
+            final dynamic args = Get.arguments;
+            if (args is Map) {
+              return args['inputLebarRumah'] ??
+                  args['landWidth'] ??
+                  args['lebarRumah'] ??
+                  args['lebarLahan'];
+            }
+            return null;
+          }),
+      fallback: 8,
+    );
   }
 
-  return _toDouble(
-    _tryRead(() => controller.inputLebarRumah) ??
-        _tryRead(() => controller.landWidth) ??
-        _tryRead(() => controller.lebarRumah) ??
-        _tryRead(() => controller.lebarLahan) ??
-        _tryRead(() {
-          final dynamic args = Get.arguments;
-          if (args is Map) {
-            return args['inputLebarRumah'] ??
-                args['landWidth'] ??
-                args['lebarRumah'] ??
-                args['lebarLahan'];
-          }
-          return null;
-        }),
-    fallback: 8,
-  );
-}
   double _getLandLength(dynamic controller) {
-  if (widget.inputPanjangRumah != null) {
-    return _toDouble(widget.inputPanjangRumah, fallback: 10);
+    if (widget.inputPanjangRumah != null) {
+      return _toDouble(widget.inputPanjangRumah, fallback: 10);
+    }
+
+    return _toDouble(
+      _tryRead(() => controller.inputPanjangRumah) ??
+          _tryRead(() => controller.landLength) ??
+          _tryRead(() => controller.panjangRumah) ??
+          _tryRead(() => controller.panjangLahan) ??
+          _tryRead(() {
+            final dynamic args = Get.arguments;
+            if (args is Map) {
+              return args['inputPanjangRumah'] ??
+                  args['landLength'] ??
+                  args['panjangRumah'] ??
+                  args['panjangLahan'];
+            }
+            return null;
+          }),
+      fallback: 10,
+    );
   }
 
-  return _toDouble(
-    _tryRead(() => controller.inputPanjangRumah) ??
-        _tryRead(() => controller.landLength) ??
-        _tryRead(() => controller.panjangRumah) ??
-        _tryRead(() => controller.panjangLahan) ??
-        _tryRead(() {
-          final dynamic args = Get.arguments;
-          if (args is Map) {
-            return args['inputPanjangRumah'] ??
-                args['landLength'] ??
-                args['panjangRumah'] ??
-                args['panjangLahan'];
-          }
-          return null;
-        }),
-    fallback: 10,
-  );
-}
   dynamic _unwrap(dynamic value) {
     try {
       return value.value;
@@ -779,6 +837,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
       controller.rooms.refresh();
     } catch (_) {}
   }
+
   Future<void> _callSave(dynamic controller) async {
     final List<RoomModel> saveRooms = _getRooms(controller);
     final double saveLandWidth = _getLandWidth(controller);
@@ -894,12 +953,3 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     }
   }
 }
-
-
-
-
-
-
-
-
-
