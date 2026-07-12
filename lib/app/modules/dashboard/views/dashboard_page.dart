@@ -8,8 +8,11 @@ import 'package:smart_floor_plan/app/modules/analysis/views/analysis_page.dart';
 
 import '../controllers/dashboard_controller.dart';
 
-class DashboardPage extends GetView<DashboardController> {
-  const DashboardPage({super.key});
+class DashboardPage extends StatelessWidget {
+  DashboardPage({super.key});
+
+  final DashboardController controller =
+    Get.find<DashboardController>();
 
   static const Color navy = Color(0xFF0D1B2A);
   static const Color orange = Color(0xFFE47B3E);

@@ -18,10 +18,10 @@ import 'package:smart_floor_plan/app/services/pdf_download_history_service.dart'
 class RiwayatPage extends StatelessWidget {
   const RiwayatPage({super.key});
 
-  static const Color navy = Color(0xFF0D1B2A);
-  static const Color orange = Color(0xFFE47B3E);
-  static const Color background = Color(0xFFF5F7FA);
-  static const Color softGrey = Color(0xFFEDEFF3);
+  static const Color navy = Color(0xFF1E3A5F);
+static const Color orange = Color(0xFFF28C28);
+static const Color background = Color(0xFFF8F9FB);
+static const Color softGrey = Color(0xFFF1F3F6);
 
   RiwayatController get controller {
     if (Get.isRegistered<RiwayatController>()) {
@@ -32,24 +32,30 @@ class RiwayatPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final RiwayatController riwayatController = controller;
+Widget build(BuildContext context) {
+  final RiwayatController riwayatController = controller;
 
-    return SafeArea(
+  return Scaffold(
+    backgroundColor: background,
+    body: SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
           final bool isMobile = constraints.maxWidth < 600;
           final bool isWide = constraints.maxWidth > 720;
-          final double maxWidth = isWide ? 680 : double.infinity;
+          final double maxWidth =
+              isWide ? 680 : double.infinity;
 
           return Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+              ),
               child: RefreshIndicator(
                 onRefresh: riwayatController.loadHistories,
                 color: orange,
                 child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics:
+                      const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     isMobile ? 16 : 24,
                     isMobile ? 18 : 24,
@@ -57,45 +63,59 @@ class RiwayatPage extends StatelessWidget {
                     110,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       _buildHeader(
                         isMobile: isMobile,
                         controller: riwayatController,
                       ),
+
                       const SizedBox(height: 22),
+
                       _buildSummary(
                         isMobile: isMobile,
                         controller: riwayatController,
                       ),
+
                       const SizedBox(height: 20),
+
                       Obx(() {
-                        if (riwayatController.isLoading.value) {
+                        if (riwayatController
+                            .isLoading.value) {
                           return const SizedBox(
                             height: 260,
                             child: Center(
-                              child: CircularProgressIndicator(
+                              child:
+                                  CircularProgressIndicator(
                                 color: orange,
                               ),
                             ),
                           );
                         }
 
-                        if (riwayatController.histories.isEmpty) {
-                          return _buildEmptyBox(isMobile);
+                        if (riwayatController
+                            .histories.isEmpty) {
+                          return _buildEmptyBox(
+                              isMobile);
                         }
 
                         return Column(
-                          children: riwayatController.histories.map((item) {
+                          children:
+                              riwayatController.histories
+                                  .map((item) {
                             return _buildHistoryCard(
                               isMobile: isMobile,
                               item: item,
-                              controller: riwayatController,
+                              controller:
+                                  riwayatController,
                             );
                           }).toList(),
                         );
                       }),
+
                       const SizedBox(height: 12),
+
                       _buildInfoBox(isMobile),
                     ],
                   ),
@@ -105,66 +125,82 @@ class RiwayatPage extends StatelessWidget {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHeader({
-    required bool isMobile,
-    required RiwayatController controller,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Riwayat Desain',
-                style: TextStyle(
-                  color: navy,
-                  fontSize: isMobile ? 26 : 30,
-                  fontWeight: FontWeight.bold,
-                ),
+  required bool isMobile,
+  required RiwayatController controller,
+}) {
+  return Row(
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Riwayat Desain',
+              style: TextStyle(
+                color: navy,
+                fontSize:
+                    isMobile ? 26 : 30,
+                fontWeight:
+                    FontWeight.bold,
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Daftar rancangan denah yang tersimpan di Supabase.',
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: isMobile ? 13.5 : 15,
-                  height: 1.4,
-                ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Daftar rancangan denah yang tersimpan di Supabase.',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize:
+                    isMobile ? 13.5 : 15,
+                height: 1.4,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        InkWell(
-          onTap: () => controller.loadHistories(),
-          borderRadius: BorderRadius.circular(18),
+      ),
+
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () =>
+              controller.loadHistories(),
+          borderRadius:
+              BorderRadius.circular(18),
           child: Container(
             width: isMobile ? 48 : 54,
             height: isMobile ? 48 : 54,
             decoration: BoxDecoration(
               color: navy,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius:
+                  BorderRadius.circular(
+                      18),
               boxShadow: [
                 BoxShadow(
-                  color: navy.withOpacity(0.18),
+                  color: navy.withOpacity(
+                      0.18),
                   blurRadius: 14,
-                  offset: const Offset(0, 8),
+                  offset:
+                      const Offset(0, 8),
                 ),
               ],
             ),
             child: Icon(
               Icons.refresh_rounded,
               color: Colors.white,
-              size: isMobile ? 25 : 28,
+              size:
+                  isMobile ? 25 : 28,
             ),
           ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildSummary({
     required bool isMobile,

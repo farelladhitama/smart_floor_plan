@@ -92,7 +92,7 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.dashboard,
-      page: () => const DashboardPage(),
+      page: () => DashboardPage(),
       bindings: [
         DashboardBinding(),
         ProfileBinding(),

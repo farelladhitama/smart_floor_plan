@@ -3,16 +3,25 @@ import 'package:get/get.dart';
 class DashboardController extends GetxController {
   final selectedIndex = 0.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+
+    if (Get.arguments != null && Get.arguments is int) {
+      selectedIndex.value = Get.arguments as int;
+    }
+  }
+
   void changeTab(int index) {
     selectedIndex.value = index;
   }
 
-  void goToProfileTab() {
+  void goToHistoryTab() {
     selectedIndex.value = 2;
   }
 
-  void goToHistoryTab() {
-    selectedIndex.value = 1;
+  void goToProfileTab() {
+    selectedIndex.value = 3;
   }
 
   void goToHomeTab() {

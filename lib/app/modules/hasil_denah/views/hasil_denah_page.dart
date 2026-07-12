@@ -7,6 +7,9 @@ import 'package:smart_floor_plan/app/modules/edit_denah/views/edit_denah_page.da
 import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah_controller.dart';
 import 'package:smart_floor_plan/app/widgets/floor_plan_asset_overlay.dart';
 import 'package:smart_floor_plan/app/widgets/professional_floor_plan_painter.dart';
+import 'package:smart_floor_plan/app/modules/riwayat/views/riwayat_page.dart';
+import 'package:smart_floor_plan/app/modules/dashboard/controllers/dashboard_controller.dart';
+import 'package:smart_floor_plan/app/modules/dashboard/views/dashboard_page.dart';
 
 class HasilDenahPage extends StatefulWidget {
   final List<RoomModel> rooms;
@@ -924,8 +927,15 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     } catch (_) {}
 
     try {
-      await controller.simpanDenah();
-    } catch (error) {
+await controller.simpanDenah();
+
+Get.offAllNamed(
+  AppRoutes.dashboard,
+  arguments: 2,
+);
+
+
+} catch (error) {
       Get.snackbar(
         'Gagal Simpan',
         'Terjadi kesalahan: $error',
