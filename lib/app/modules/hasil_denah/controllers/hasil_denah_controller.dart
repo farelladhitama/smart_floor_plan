@@ -83,9 +83,15 @@ class HasilDenahController extends GetxController {
     return landWidth * landLength;
   }
 
-  double get estimasiRab {
-    return totalRoomArea * 3500000;
+  double _cachedEstimasiRab = 0;
+
+double get estimasiRab {
+  if (_cachedEstimasiRab > 0) {
+    return _cachedEstimasiRab;
   }
+
+  return totalLandArea * 3500000;
+}
 
   int get indoorRoomCount {
     return currentRooms.where((room) => !room.isOutdoor).length;
@@ -134,22 +140,25 @@ class HasilDenahController extends GetxController {
   }
 
   Map<String, dynamic> _buildRabArguments() {
-    final double luas = totalLandArea;
-    final Map<String, String> selected = _effectiveSelectedMaterials();
+  final double luas = totalLandArea;
+  final Map<String, String> selected = _effectiveSelectedMaterials();
 
-    return {
-      'luasBangunan': luas,
-      'totalLuas': luas,
-      'total_luas': luas,
-      'inputLuas': luas,
-      'inputLebarRumah': landWidth,
-      'inputPanjangRumah': landLength,
-      'lebar_lahan': landWidth,
-      'panjang_lahan': landLength,
-      'material': selected['Material Dinding'] ?? material,
-      'selectedMaterials': selected,
-    };
-  }
+  return {
+    'luasBangunan': luas,
+    'totalLuas': luas,
+    'total_luas': luas,
+    'estimasi_rab': estimasiRab,
+    'inputLuas': luas,
+    'inputLebarRumah': landWidth,
+    'inputPanjangRumah': landLength,
+    'lebar_lahan': landWidth,
+    'panjang_lahan': landLength,
+    'material': selected['Material Dinding'] ?? material,
+    'selectedMaterials': selected,
+    'jenisTukang':
+    Get.arguments?['jenisTukang'] ?? 'Tukang Harian',
+  };
+}
 
 
   bool _isScanModeFromArguments() {
@@ -485,6 +494,7 @@ class HasilDenahController extends GetxController {
         'detected_rooms_json': detectedRoomsJson,
         'scan_image_name': _scanImageNameFromArguments(),
         'updated_at': DateTime.now().toIso8601String(),
+        'jenis_tukang': Get.arguments?['jenisTukang'] ?? 'Tukang Harian',
       };
 
       if (floorPlanId != null && floorPlanId!.isNotEmpty && isSaved.value) {
@@ -560,10 +570,17 @@ class HasilDenahController extends GetxController {
       final List<Map<String, dynamic>> roomsJson =
           currentRooms.map((room) => _roomToJson(room)).toList();
       final Map<String, String> selected = _effectiveSelectedMaterials();
-final double estimasiMaterialRab = await _calculateEstimasiMaterialRab(
-        selectedMaterials: selected,
-        luasBangunan: totalLandArea,
-      );
+final double estimasiMaterialRab =
+    await _calculateEstimasiMaterialRab(
+      selectedMaterials: selected,
+      luasBangunan: totalLandArea,
+    );
+
+_cachedEstimasiRab = estimasiMaterialRab;
+
+print('==============');
+print('JENIS TUKANG = ${Get.arguments?['jenisTukang']}');
+print('=============='); 
 
       final Map<String, dynamic> payload = {
         'user_id': user.id,
@@ -572,6 +589,7 @@ final double estimasiMaterialRab = await _calculateEstimasiMaterialRab(
         'panjang_lahan': landLength,
         'lebar_lahan': landWidth,
         'jumlah_kamar': jumlahKamar,
+        'jenis_tukang': Get.arguments?['jenisTukang'] ?? 'Tukang Harian',
         'material_dinding': selected['Material Dinding'] ?? material,
         'material_semen': selected['Semen'],
         'material_pasir': selected['Pasir'],

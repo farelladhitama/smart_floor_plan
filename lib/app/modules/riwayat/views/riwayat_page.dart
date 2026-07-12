@@ -801,19 +801,23 @@ Widget build(BuildContext context) {
     final String material = selectedMaterials['Material Dinding'] ??
         (item['material_dinding'] ?? item['material_dinding'] ?? 'batu bata merah').toString();
 
+        
+
     final Map<String, dynamic> rabArgs = {
-      'luasBangunan': luas,
-      'totalLuas': luas,
-      'total_luas': luas,
-      'inputLuas': luas,
-      'inputLebarRumah': lebar,
-      'inputPanjangRumah': panjang,
-      'lebar_lahan': lebar,
-      'panjang_lahan': panjang,
-      'material': material,
-      'selectedMaterials': selectedMaterials,
-      'rooms_json': item['rooms_json'],
-    };
+  'luasBangunan': luas,
+  'totalLuas': luas,
+  'total_luas': luas,
+  'inputLuas': luas,
+  'inputLebarRumah': lebar,
+  'inputPanjangRumah': panjang,
+  'lebar_lahan': lebar,
+  'panjang_lahan': panjang,
+  'material': material,
+  'selectedMaterials': selectedMaterials,
+  'rooms_json': item['rooms_json'],
+
+  'jenisTukang': item['jenis_tukang'],
+};
 
     if (Get.isBottomSheetOpen == true) {
       Get.back();

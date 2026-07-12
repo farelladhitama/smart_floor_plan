@@ -143,29 +143,101 @@ class RabPage extends GetView<RabController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Total Estimasi Kebutuhan Material',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            controller.rupiah(controller.totalRab),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Berdasarkan luas ${controller.luasBangunan.value.toStringAsFixed(1)} m2',
-            style: const TextStyle(
-              color: Color(0xFFFFEFE6),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+  'Estimasi RAB Proyek',
+  style: TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.w800,
+  ),
+),
+
+const SizedBox(height: 12),
+
+const Text(
+  'Material',
+  style: TextStyle(
+    color: Colors.white70,
+    fontWeight: FontWeight.w700,
+  ),
+),
+
+Text(
+  controller.rupiah(controller.totalRab),
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 22,
+    fontWeight: FontWeight.w900,
+  ),
+),
+
+const SizedBox(height: 10),
+
+const Text(
+  'Jenis Tukang',
+  style: TextStyle(
+    color: Colors.white70,
+    fontWeight: FontWeight.w700,
+  ),
+),
+
+Text(
+  controller.selectedTukang.value,
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: FontWeight.w800,
+  ),
+),
+
+const SizedBox(height: 10),
+
+const Text(
+  'Biaya Tukang',
+  style: TextStyle(
+    color: Colors.white70,
+    fontWeight: FontWeight.w700,
+  ),
+),
+
+Text(
+  controller.rupiah(controller.biayaTukang),
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 22,
+    fontWeight: FontWeight.w900,
+  ),
+),
+
+const Divider(
+  color: Colors.white54,
+  height: 28,
+),
+
+const Text(
+  'TOTAL KESELURUHAN',
+  style: TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.w900,
+  ),
+),
+
+Text(
+  controller.rupiah(controller.totalKeseluruhan),
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 30,
+    fontWeight: FontWeight.w900,
+  ),
+),
+
+const SizedBox(height: 6),
+
+Text(
+  'Berdasarkan luas ${controller.luasBangunan.value.toStringAsFixed(1)} m2',
+  style: const TextStyle(
+    color: Color(0xFFFFEFE6),
+    fontWeight: FontWeight.w700,
+  ),
+),
         ],
       ),
     );

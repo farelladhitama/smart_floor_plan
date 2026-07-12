@@ -19,17 +19,25 @@ class HasilDenahPage extends StatefulWidget {
   final dynamic material;
   final dynamic jumlahKamar;
   final dynamic ruangTambahan;
+  final dynamic totalLuas;
+final Map<String, String>? selectedMaterials;
+final String? jenisTukang;
+  
 
   const HasilDenahPage({
-    super.key,
-    this.rooms = const [],
-    this.inputLebarRumah,
-    this.inputPanjangRumah,
-    this.floorPlanId,
-    this.material,
-    this.jumlahKamar,
-    this.ruangTambahan,
-  });
+  super.key,
+  this.rooms = const [],
+  this.inputLebarRumah,
+  this.inputPanjangRumah,
+  this.floorPlanId,
+  this.material,
+  this.jumlahKamar,
+  this.ruangTambahan,
+
+  this.totalLuas,
+  this.selectedMaterials,
+  this.jenisTukang,
+});
 
   @override
   State<HasilDenahPage> createState() => _HasilDenahPageState();
@@ -134,11 +142,28 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
               foregroundColor: Colors.white,
               elevation: 8,
               onPressed: () {
-                Get.toNamed(
-                  AppRoutes.rab,
-                  arguments: Get.arguments,
-                );
-              },
+  Get.toNamed(
+  AppRoutes.rab,
+  arguments: {
+    'luasBangunan': widget.totalLuas ??
+        (widget.inputLebarRumah * widget.inputPanjangRumah),
+
+    'estimasi_rab': controller.estimasiRab,
+
+    'inputLebarRumah': widget.inputLebarRumah,
+    'inputPanjangRumah': widget.inputPanjangRumah,
+
+    'material': widget.material,
+    'jumlahKamar': widget.jumlahKamar,
+    'ruangTambahan': widget.ruangTambahan,
+
+    'jenisTukang': widget.jenisTukang,
+    'selectedMaterials': widget.selectedMaterials,
+
+    'rooms': widget.rooms,
+  },
+);
+},
               icon: const Icon(Icons.receipt_long_rounded),
               label: const Text(
                 'LIHAT RAB',

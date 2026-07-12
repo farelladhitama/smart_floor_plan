@@ -36,8 +36,8 @@ class RiwayatController extends GetxController {
       final generateResponse = await _supabase
           .from('floor_plans')
           .select(
-            'id, title, panjang_lahan, lebar_lahan, jumlah_kamar, material_dinding, material_semen, material_pasir, material_keramik_lantai, material_cat_dinding, material_genteng_atap, material_plafon, material_pipa, ruang_tambahan, total_luas, estimasi_rab, rooms_json, created_at, updated_at',
-          )
+  'id, title, panjang_lahan, lebar_lahan, jumlah_kamar, jenis_tukang, material_dinding, material_semen, material_pasir, material_keramik_lantai, material_cat_dinding, material_genteng_atap, material_plafon, material_pipa, ruang_tambahan, total_luas, estimasi_rab, rooms_json, created_at, updated_at',
+)
           .eq('user_id', user.id)
           .order('updated_at', ascending: false);
 
@@ -310,15 +310,18 @@ class RiwayatController extends GetxController {
     Get.toNamed(
       AppRoutes.rab,
       arguments: {
-        'floorPlanId': (item['id'] ?? '').toString(),
-        'luasBangunan': luasBangunan,
-        'totalLuas': luasBangunan,
-        'inputLebarRumah': lebarLahan,
-        'inputPanjangRumah': panjangLahan,
-        'material': (item['material_dinding'] ?? item['material'] ?? '').toString(),
-        'selectedMaterials': _selectedMaterialsFromItem(item),
-        'rooms': item['rooms_json'],
-      },
+  'floorPlanId': (item['id'] ?? '').toString(),
+  'luasBangunan': luasBangunan,
+  'totalLuas': luasBangunan,
+  'inputLebarRumah': lebarLahan,
+  'inputPanjangRumah': panjangLahan,
+  'material': (item['material_dinding'] ?? item['material'] ?? '').toString(),
+  'selectedMaterials': _selectedMaterialsFromItem(item),
+  'jenisTukang': item['jenis_tukang'],
+  'estimasi_rab': item['estimasi_rab'],
+  'rooms': item['rooms_json'],
+  'estimasi_rab': item['estimasi_rab'],
+},
     );
   }
 
@@ -374,16 +377,20 @@ class RiwayatController extends GetxController {
     Get.put(HasilDenahController());
 
     await Get.to(
-      () => HasilDenahPage(
-        rooms: rooms,
-        inputLebarRumah: landWidth,
-        inputPanjangRumah: landLength,
-        floorPlanId: (item['id'] ?? '').toString(),
-        material: (item['material_dinding'] ?? item['material'] ?? 'Batu Bata').toString(),
-        jumlahKamar: _toNum(item['jumlah_kamar']).toInt(),
-        ruangTambahan: _stringListFromDynamic(item['ruang_tambahan']),
-      ),
-    );
+  () => HasilDenahPage(
+    rooms: rooms,
+    inputLebarRumah: landWidth,
+    inputPanjangRumah: landLength,
+    floorPlanId: (item['id'] ?? '').toString(),
+    material: (item['material_dinding'] ?? item['material'] ?? 'Batu Bata').toString(),
+    jumlahKamar: _toNum(item['jumlah_kamar']).toInt(),
+    ruangTambahan: _stringListFromDynamic(item['ruang_tambahan']),
+
+    totalLuas: _toDouble(item['total_luas']),
+    selectedMaterials: _selectedMaterialsFromItem(item),
+    jenisTukang: (item['jenis_tukang'] ?? 'Tukang Harian').toString(),
+  ),
+);
 
     await loadHistories();
   }

@@ -24,6 +24,12 @@ class GenerateFormController extends GetxController {
   final TextEditingController tambahanRuanganController = TextEditingController();
 
   final RxString selectedMaterial = 'batu bata merah'.obs;
+  final List<String> tukangOptions = [
+  'Tukang Harian',
+  'Tukang Borongan',
+];
+
+final RxString selectedTukang = 'Tukang Harian'.obs;
 
   final List<String> materialCategories = const [
     'Material Dinding',
@@ -339,14 +345,20 @@ await ActivityLogService.addLog(
   icon: "home",
 );
     Get.to(
-      () => hasil_view.HasilDenahPage(
-        rooms: generatedRooms,
-        inputLebarRumah: result.landWidth,
-        inputPanjangRumah: result.landLength,
-        material: materialDinding,
-        jumlahKamar: bedroomCount,
-        ruangTambahan: extraRoomNames,
-      ),
+  () => hasil_view.HasilDenahPage(
+    rooms: generatedRooms,
+    inputLebarRumah: result.landWidth,
+    inputPanjangRumah: result.landLength,
+    material: materialDinding,
+    jumlahKamar: bedroomCount,
+    ruangTambahan: extraRoomNames,
+
+    // TAMBAHKAN INI
+    totalLuas: result.landWidth * result.landLength,
+    selectedMaterials: Map<String, String>.from(selectedMaterials),
+    jenisTukang: selectedTukang.value,
+  ),
+  
       arguments: {
         'selectedMaterials': Map<String, String>.from(selectedMaterials),
         'ruangTambahan': extraRoomNames,
@@ -355,6 +367,7 @@ await ActivityLogService.addLog(
         'totalLuas': result.landWidth * result.landLength,
         'inputLebarRumah': result.landWidth,
         'inputPanjangRumah': result.landLength,
+        'jenisTukang': selectedTukang.value,
       },
     );
   }

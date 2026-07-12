@@ -32,6 +32,8 @@ class RabController extends GetxController {
   final luasBangunan = 100.0.obs;
 
   final selectedMaterials = <String, String>{}.obs;
+  final selectedTukang = ''.obs;
+  final totalRabOverride = 0.0.obs;
 
   List<Map<String, dynamic>> rawMaterialOptions = [];
   dynamic rooms;
@@ -75,6 +77,15 @@ class RabController extends GetxController {
 
     _lastAppliedArgumentsSignature = signature;
     pendingArguments = null;
+    if (args['estimasi_rab'] != null) {
+  final parsed = double.tryParse(
+    args['estimasi_rab'].toString(),
+  );
+
+  if (parsed != null && parsed > 0) {
+    totalRabOverride.value = parsed;
+  }
+}
 
     final selected = args['selectedMaterials'];
 
@@ -85,6 +96,19 @@ class RabController extends GetxController {
     }
 
     final singleMaterial = args['material'];
+
+    if (args['jenisTukang'] != null ||
+    args['jenis_tukang'] != null) {
+  selectedTukang.value =
+      (args['jenisTukang'] ??
+       args['jenis_tukang'])
+      .toString();
+}
+
+print('====================');
+print('RAB JENIS TUKANG = ${selectedTukang.value}');
+print('====================');
+
     if (singleMaterial != null &&
         singleMaterial.toString().trim().isNotEmpty) {
       selectedMaterials['Material Dinding'] = singleMaterial.toString();
@@ -109,19 +133,24 @@ class RabController extends GetxController {
     final lebar = args['inputLebarRumah'] ?? args['lebar_lahan'];
     final panjang = args['inputPanjangRumah'] ?? args['panjang_lahan'];
 
-    if (lebar != null && panjang != null) {
-      final w = double.tryParse(lebar.toString().replaceAll(',', '.'));
-      final l = double.tryParse(panjang.toString().replaceAll(',', '.'));
+    if (luas == null && lebar != null && panjang != null) {
+  final w = double.tryParse(lebar.toString().replaceAll(',', '.'));
+  final l = double.tryParse(panjang.toString().replaceAll(',', '.'));
 
-      if (w != null && l != null && w > 0 && l > 0) {
-        luasBangunan.value = w * l;
-        luasController.text = luasBangunan.value.toStringAsFixed(1);
-      }
-    }
+  if (w != null && l != null && w > 0 && l > 0) {
+    luasBangunan.value = w * l;
+    luasController.text = luasBangunan.value.toStringAsFixed(1);
+  }
+}
 
     if (rawMaterialOptions.isNotEmpty) {
       ensureDefaultSelectedMaterials();
+      debugPrint('======================');
+      debugPrint('SELECTED MATERIALS');
+      debugPrint(selectedMaterials.toString());
+      debugPrint('======================');
       calculateRab();
+      
     }
   }
 
@@ -382,10 +411,31 @@ class RabController extends GetxController {
   }
 
   double get totalRab {
-    return rabItems.fold(0, (sum, item) => sum + item.totalHarga);
+  if (totalRabOverride.value > 0) {
+    return totalRabOverride.value;
   }
 
-  String rupiah(num value) {
+  return rabItems.fold(
+    0,
+    (sum, item) => sum + item.totalHarga,
+  );
+}
+
+double get biayaTukang {
+  switch (selectedTukang.value) {
+    case 'Tukang Borongan':
+      return luasBangunan.value * 250000;
+
+    default:
+      return luasBangunan.value * 150000;
+  }
+}
+
+double get totalKeseluruhan {
+  return totalRab + biayaTukang;
+}
+
+String rupiah(num value) {
     final text = value.round().toString();
     final buffer = StringBuffer();
 

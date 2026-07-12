@@ -145,7 +145,35 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                         _buildRecommendationButton(),
                         const SizedBox(height: 16),
                         _buildRecommendationSection(),
+_sectionTitle(
+  title: 'Jenis Tukang',
+  subtitle: 'Pilih metode pengerjaan proyek.',
+),
 
+const SizedBox(height: 14),
+
+Obx(
+  () => DropdownButtonFormField<String>(
+    value: controller.selectedTukang.value,
+    decoration: InputDecoration(
+      labelText: 'Pilih Jenis Tukang',
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    items: controller.tukangOptions.map((item) {
+      return DropdownMenuItem(
+        value: item,
+        child: Text(item),
+      );
+    }).toList(),
+    onChanged: (value) {
+      if (value != null) {
+        controller.selectedTukang.value = value;
+      }
+    },
+  ),
+),
                         const SizedBox(height: 34),
                         _buildGenerateButton(),
                       ],
