@@ -37,7 +37,7 @@ class RabController extends GetxController {
 
   List<Map<String, dynamic>> rawMaterialOptions = [];
   dynamic rooms;
-  final selectedTukang = ''.obs;
+
   final List<String> tampilKategori = const [
     'Material Dinding',
     'Semen',
