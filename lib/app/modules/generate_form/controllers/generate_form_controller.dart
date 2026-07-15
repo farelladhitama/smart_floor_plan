@@ -363,6 +363,7 @@ await ActivityLogService.addLog(
         'selectedMaterials': Map<String, String>.from(selectedMaterials),
         'ruangTambahan': extraRoomNames,
         'material': materialDinding,
+        'jenisTukang': selectedTukang.value,
         'luasBangunan': result.landWidth * result.landLength,
         'totalLuas': result.landWidth * result.landLength,
         'inputLebarRumah': result.landWidth,

@@ -60,6 +60,10 @@ class ProfilePage extends GetView<ProfileController> {
   }
 }
 
+// ═══════════════════════════════════════════════════
+//  HEADER
+// ═══════════════════════════════════════════════════
+
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard();
 
@@ -149,12 +153,14 @@ class _LogoIcon extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════
+//  PROFILE CARD (avatar + nama + badge)
+// ═══════════════════════════════════════════════════
+
 class _ProfileCard extends StatelessWidget {
   final ProfileController controller;
 
-  const _ProfileCard({
-    required this.controller,
-  });
+  const _ProfileCard({required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -164,9 +170,7 @@ class _ProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: const Color(0xFFE9EEF4),
-        ),
+        border: Border.all(color: const Color(0xFFE9EEF4)),
         boxShadow: [
           BoxShadow(
             color: ProfilePage.navy.withValues(alpha: 0.07),
@@ -230,10 +234,7 @@ class _ProfileCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
               color: ProfilePage.orange.withValues(alpha: 0.09),
               borderRadius: BorderRadius.circular(30),
@@ -264,12 +265,14 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════
+//  ACCOUNT INFO CARD
+// ═══════════════════════════════════════════════════
+
 class _AccountInfoCard extends StatelessWidget {
   final ProfileController controller;
 
-  const _AccountInfoCard({
-    required this.controller,
-  });
+  const _AccountInfoCard({required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -279,9 +282,7 @@ class _AccountInfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: ProfilePage.border,
-        ),
+        border: Border.all(color: ProfilePage.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,22 +296,228 @@ class _AccountInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Nama — tidak bisa diedit di sini
           _InfoRow(
             icon: Icons.badge_outlined,
             title: 'Nama Lengkap',
             value: controller.displayName,
           ),
+
           const SizedBox(height: 14),
-          _InfoRow(
-            icon: Icons.alternate_email_rounded,
-            title: 'Email',
-            value: controller.displayEmail,
+
+          // Email — ada tombol edit
+          Row(
+            children: [
+              Expanded(
+                child: _InfoRow(
+                  icon: Icons.alternate_email_rounded,
+                  title: 'Email',
+                  value: controller.displayEmail,
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _showChangeEmailSheet(context, controller),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: ProfilePage.orange.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    color: ProfilePage.orange,
+                    size: 19,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+
+// ═══════════════════════════════════════════════════
+//  BOTTOM SHEET — GANTI EMAIL
+// ═══════════════════════════════════════════════════
+
+void _showChangeEmailSheet(
+  BuildContext context,
+  ProfileController controller,
+) {
+  controller.emailController.clear();
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.of(ctx).viewInsets.bottom + 32,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDE3EE),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+
+          // Judul
+          const Text(
+            'Ganti Email',
+            style: TextStyle(
+              color: ProfilePage.navy,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Supabase akan mengirim link konfirmasi ke email baru. Email berganti setelah link dikonfirmasi.',
+            style: TextStyle(
+              color: ProfilePage.secondaryText,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 22),
+
+          // Input email baru
+          TextField(
+            controller: controller.emailController,
+            keyboardType: TextInputType.emailAddress,
+            autofocus: true,
+            style: const TextStyle(
+              color: ProfilePage.navy,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            decoration: InputDecoration(
+              labelText: 'Email baru',
+              labelStyle: const TextStyle(
+                color: ProfilePage.secondaryText,
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.alternate_email_rounded,
+                color: ProfilePage.orange,
+                size: 20,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: ProfilePage.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: ProfilePage.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: ProfilePage.orange,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Tombol kirim konfirmasi
+          Obx(
+            () => SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: controller.isUpdatingEmail.value
+                    ? null
+                    : () => controller.updateEmail(
+                          controller.emailController.text,
+                        ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ProfilePage.orange,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor:
+                      ProfilePage.orange.withValues(alpha: 0.45),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: controller.isUpdatingEmail.value
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Kirim Konfirmasi',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+
+          // Tombol batal
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: TextButton(
+              onPressed: () => Get.back(),
+              style: TextButton.styleFrom(
+                foregroundColor: ProfilePage.secondaryText,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// ═══════════════════════════════════════════════════
+//  INFO ROW
+// ═══════════════════════════════════════════════════
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
@@ -370,12 +577,14 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════
+//  MENU CARD
+// ═══════════════════════════════════════════════════
+
 class _MenuCard extends StatelessWidget {
   final ProfileController controller;
 
-  const _MenuCard({
-    required this.controller,
-  });
+  const _MenuCard({required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -385,47 +594,46 @@ class _MenuCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: ProfilePage.border,
-        ),
+        border: Border.all(color: ProfilePage.border),
       ),
-     child: Column(
-  children: [
-    _MenuTile(
-      icon: Icons.refresh_rounded,
-      title: 'Muat ulang profil',
-      subtitle: 'Ambil ulang data dari Supabase',
-      onTap: controller.loadProfile,
-    ),
+      child: Column(
+        children: [
+          _MenuTile(
+            icon: Icons.refresh_rounded,
+            title: 'Muat ulang profil',
+            subtitle: 'Ambil ulang data dari Supabase',
+            onTap: controller.loadProfile,
+          ),
 
-    const Divider(height: 1),
+          const Divider(height: 1),
 
-    _MenuTile(
-      icon: Icons.history,
-      title: 'Activity Log',
-      subtitle: 'Lihat riwayat aktivitas',
-      onTap: () {
-        Get.toNamed(AppRoutes.ACTIVITY_LOG);
-      },
-    ),
+          _MenuTile(
+            icon: Icons.history,
+            title: 'Activity Log',
+            subtitle: 'Lihat riwayat aktivitas',
+            onTap: () {
+              Get.toNamed(AppRoutes.ACTIVITY_LOG);
+            },
+          ),
 
-    const Divider(height: 1),
+          const Divider(height: 1),
 
-    Obx(
-      () => _MenuTile(
-        icon: Icons.logout_rounded,
-        title: 'Logout',
-        subtitle: 'Keluar dari akun SmartFloorPlan',
-        isDanger: true,
-        isLoading: controller.isLoggingOut.value,
-        onTap: controller.logout,
+          Obx(
+            () => _MenuTile(
+              icon: Icons.logout_rounded,
+              title: 'Logout',
+              subtitle: 'Keluar dari akun SmartFloorPlan',
+              isDanger: true,
+              isLoading: controller.isLoggingOut.value,
+              onTap: controller.logout,
+            ),
+          ),
+        ],
       ),
-    ),
-  ],
-),
     );
   }
 }
+
 class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -454,10 +662,7 @@ class _MenuTile extends StatelessWidget {
         onTap: isLoading ? null : onTap,
         borderRadius: BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 6,
-            vertical: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
           child: Row(
             children: [
               Container(
@@ -475,11 +680,7 @@ class _MenuTile extends StatelessWidget {
                           color: Colors.redAccent,
                         ),
                       )
-                    : Icon(
-                        icon,
-                        color: iconColor,
-                        size: 22,
-                      ),
+                    : Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(width: 13),
               Expanded(

@@ -244,34 +244,86 @@ Text(
   }
 
   Widget materialListCard() {
-    return card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Kebutuhan Bahan Bangunan',
-            style: TextStyle(
-              color: navy,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
+  return card(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Kebutuhan Bahan Bangunan',
+          style: TextStyle(
+            color: navy,
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        const Text(
+          'Jumlah bahan dihitung otomatis dari luas bangunan menggunakan koefisien estimasi awal.',
+          style: TextStyle(
+            color: Colors.black54,
+            fontSize: 12.5,
+            height: 1.4,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        ...controller.rabItems.map(materialItem),
+
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFE1E7EF),
             ),
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Jumlah bahan dihitung otomatis dari luas bangunan menggunakan koefisien estimasi awal.',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12.5,
-              height: 1.4,
-              fontWeight: FontWeight.w500,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                controller.selectedTukang.value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                'Biaya Tukang',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Text(
+                controller.rupiah(
+                  controller.selectedTukang.value == 'Tukang Borongan'
+                      ? controller.luasBangunan.value * 250000
+                      : controller.luasBangunan.value * 150000,
+                ),
+                style: const TextStyle(
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          ...controller.rabItems.map(materialItem),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget materialItem(RabMaterialResult item) {
     return Container(

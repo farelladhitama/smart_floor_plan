@@ -11,10 +11,13 @@ class ProfileController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxBool isLoggingOut = false.obs;
+  final RxBool isUpdatingEmail = false.obs;
 
   final RxString fullName = ''.obs;
   final RxString email = ''.obs;
   final RxString userId = ''.obs;
+
+  final TextEditingController emailController = TextEditingController();
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -22,6 +25,12 @@ class ProfileController extends GetxController {
   void onInit() {
     super.onInit();
     loadProfile();
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    super.onClose();
   }
 
   Future<void> loadProfile() async {
@@ -73,18 +82,18 @@ class ProfileController extends GetxController {
       return;
     }
 
-   try {
-  isLoggingOut.value = true;
+    try {
+      isLoggingOut.value = true;
 
-  await ActivityLogService.addLog(
-    title: "Logout",
-    description: "User keluar dari aplikasi",
-    icon: "logout",
-  );
+      await ActivityLogService.addLog(
+        title: "Logout",
+        description: "User keluar dari aplikasi",
+        icon: "logout",
+      );
 
-  await _supabase.auth.signOut();
+      await _supabase.auth.signOut();
 
-  Get.offAllNamed(AppRoutes.login);
+      Get.offAllNamed(AppRoutes.login);
       showMessage(
         'Logout Berhasil',
         'Anda telah keluar dari akun SmartFloorPlan.',
@@ -99,11 +108,69 @@ class ProfileController extends GetxController {
     }
   }
 
+  Future<void> updateEmail(String newEmail) async {
+    final String trimmed = newEmail.trim();
+
+    if (trimmed.isEmpty) {
+      showMessage('Gagal', 'Email tidak boleh kosong.');
+      return;
+    }
+
+    if (trimmed == email.value) {
+      showMessage('Gagal', 'Email baru sama dengan email aktif.');
+      return;
+    }
+
+    if (!GetUtils.isEmail(trimmed)) {
+      showMessage('Gagal', 'Format email tidak valid.');
+      return;
+    }
+
+    try {
+      isUpdatingEmail.value = true;
+
+      // Update Supabase Auth — Supabase kirim link konfirmasi ke email baru
+      await _supabase.auth.updateUser(
+  UserAttributes(
+    email: trimmed,
+  ),
+  emailRedirectTo:
+      'https://achmadmundakir.pythonanywhere.com',
+);
+      // Update tabel profiles
+      await _supabase
+          .from('profiles')
+          .update({'email': trimmed})
+          .eq('id', userId.value);
+
+      // Catat activity log
+      await ActivityLogService.addLog(
+        title: 'Permintaan Ganti Email',
+        description: 'Permintaan ganti email ke $trimmed',
+        icon: 'email',
+      );
+
+      Get.back();
+
+      showMessage(
+        'Cek Email Kamu',
+        'Link konfirmasi dikirim ke $trimmed. Email akan berganti setelah dikonfirmasi.',
+      );
+    } on AuthException catch (e) {
+      showMessage('Gagal Ganti Email', e.message);
+    } on PostgrestException catch (e) {
+      showMessage('Gagal Ganti Email', e.message);
+    } catch (e) {
+      showMessage('Gagal Ganti Email', 'Terjadi kesalahan: $e');
+    } finally {
+      isUpdatingEmail.value = false;
+    }
+  }
+
   String get displayName {
     if (fullName.value.trim().isEmpty) {
       return 'Pengguna SmartFloorPlan';
     }
-
     return fullName.value.trim();
   }
 
@@ -111,17 +178,14 @@ class ProfileController extends GetxController {
     if (email.value.trim().isEmpty) {
       return 'Email tidak tersedia';
     }
-
     return email.value.trim();
   }
 
   String get initialName {
     final String name = displayName.trim();
-
     if (name.isEmpty) {
       return 'S';
     }
-
     return name[0].toUpperCase();
   }
 

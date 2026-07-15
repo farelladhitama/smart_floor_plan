@@ -91,4 +91,23 @@ def method_not_allowed(error):
 # RUN
 # ============================================================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=Config.DEBUG)
+    import threading
+
+    def _warmup():
+        try:
+            #from services.cv_service import get_model
+            get_model()
+            print("AI Model Warmup Success")
+        except Exception as e:
+            print(f"AI Warmup Failed: {e}")
+
+    threading.Thread(
+        target=_warmup,
+        daemon=True
+    ).start()
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=Config.DEBUG
+    )

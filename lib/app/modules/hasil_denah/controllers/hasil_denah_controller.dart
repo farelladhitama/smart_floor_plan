@@ -617,11 +617,17 @@ print('==============');
           message: 'Perubahan denah berhasil diperbarui di riwayat.',
         );
       } else {
-        final Map<String, dynamic> inserted = await _supabase
-            .from('floor_plans')
-            .insert(payload)
-            .select('id')
-            .single();
+        print("========== INSERT FLOOR PLAN ==========");
+print(payload);
+
+final Map<String, dynamic> inserted = await _supabase
+    .from('floor_plans')
+    .insert(payload)
+    .select('id')
+    .single();
+
+print("========== INSERT SUCCESS ==========");
+print(inserted);
 
         floorPlanId = (inserted['id'] ?? '').toString();
 
@@ -639,9 +645,13 @@ print('==============');
 
       isSaved.value = true;
 
-      if (Get.isRegistered<RiwayatController>()) {
-        await Get.find<RiwayatController>().loadHistories();
-      }
+     isSaved.value = true;
+
+if (!Get.isRegistered<RiwayatController>()) {
+  Get.put(RiwayatController());
+}
+
+await Get.find<RiwayatController>().loadHistories();
     } on PostgrestException catch (error) {
       _showSnackBar(
         title: 'Gagal Simpan Database',

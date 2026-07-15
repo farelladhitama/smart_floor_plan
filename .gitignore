@@ -52,6 +52,7 @@ backend_smartfloorplan/__pycache__/
 backend_smartfloorplan/**/__pycache__/
 
 # Backend virtual environment
+venv/
 backend_smartfloorplan/venv/
 
 
@@ -72,3 +73,16 @@ backend_smartfloorplan/venv/
 *.bak
 fix_*.py
 patch_*.py
+
+# AI Training Dataset
+backend_smartfloorplan/dataset/
+
+# AI Model Files
+backend_smartfloorplan/models/saved/
+
+# Training Result Images
+backend_smartfloorplan/roc_curve.png
+backend_smartfloorplan/training_history.png
+
+# Tensorboard logs
+backend_smartfloorplan/logs/

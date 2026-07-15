@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:smart_floor_plan/app/routes/app_routes.dart';
 import 'package:smart_floor_plan/app/modules/riwayat/views/riwayat_page.dart';
 import 'package:smart_floor_plan/app/modules/profile/controllers/profile_controller.dart';
-import 'package:smart_floor_plan/app/modules/analysis/views/analysis_page.dart'; 
+import 'package:smart_floor_plan/app/modules/analysis/views/analysis_page.dart';
 
 import '../controllers/dashboard_controller.dart';
 
@@ -23,17 +23,16 @@ class DashboardPage extends StatelessWidget {
     if (Get.isRegistered<ProfileController>()) {
       return Get.find<ProfileController>();
     }
-
     return Get.put(ProfileController());
   }
- @override
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
       body: Obx(() {
         final index = controller.selectedIndex.value;
 
-        // ✅ TAMBAHKAN UNTUK ANALISIS
         if (index == 1) {
           return const AnalysisPage();
         }
@@ -43,7 +42,7 @@ class DashboardPage extends StatelessWidget {
         }
 
         if (index == 3) {
-          return _buildProfilePage();
+          return _buildProfilePage(context);
         }
 
         return _buildHomePage();
@@ -51,6 +50,10 @@ class DashboardPage extends StatelessWidget {
       bottomNavigationBar: _buildBottomNav(),
     );
   }
+
+  // ═══════════════════════════════════════════════════
+  //  HOME PAGE
+  // ═══════════════════════════════════════════════════
 
   Widget _buildHomePage() {
     return SafeArea(
@@ -126,11 +129,10 @@ class DashboardPage extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: () => controller.changeTab(2),
+          onTap: () => controller.changeTab(3),
           child: Obx(
             () {
               final profile = profileController;
-
               return Container(
                 width: isMobile ? 50 : 54,
                 height: isMobile ? 50 : 54,
@@ -339,12 +341,16 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfilePage() {
+  // ═══════════════════════════════════════════════════
+  //  PROFILE PAGE
+  // ═══════════════════════════════════════════════════
+
+  Widget _buildProfilePage(BuildContext context) {
     final ProfileController profile = profileController;
 
     return SafeArea(
       child: LayoutBuilder(
-        builder: (context, constraints) {
+        builder: (ctx, constraints) {
           final bool isMobile = constraints.maxWidth < 600;
           final bool isWide = constraints.maxWidth > 720;
           final double maxWidth = isWide ? 680 : double.infinity;
@@ -367,11 +373,9 @@ class DashboardPage extends StatelessWidget {
                     () {
                       if (profile.isLoading.value) {
                         return SizedBox(
-                          height: MediaQuery.sizeOf(context).height * 0.70,
+                          height: MediaQuery.sizeOf(ctx).height * 0.70,
                           child: const Center(
-                            child: CircularProgressIndicator(
-                              color: orange,
-                            ),
+                            child: CircularProgressIndicator(color: orange),
                           ),
                         );
                       }
@@ -379,6 +383,7 @@ class DashboardPage extends StatelessWidget {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ── Judul halaman ──────────────────────────────
                           Text(
                             'Profil',
                             style: TextStyle(
@@ -397,6 +402,8 @@ class DashboardPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 22),
+
+                          // ── Card profil utama ───────────────────────────
                           Container(
                             width: double.infinity,
                             padding: EdgeInsets.all(isMobile ? 20 : 24),
@@ -413,6 +420,7 @@ class DashboardPage extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
+                                // Avatar
                                 Container(
                                   width: isMobile ? 82 : 90,
                                   height: isMobile ? 82 : 90,
@@ -432,6 +440,8 @@ class DashboardPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
+
+                                // Nama
                                 Text(
                                   profile.displayName,
                                   textAlign: TextAlign.center,
@@ -442,15 +452,49 @@ class DashboardPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(
-                                  profile.displayEmail,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: isMobile ? 13.5 : 14.5,
-                                  ),
+
+                                // ── Email + tombol ganti ────────────────
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        profile.displayEmail,
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: isMobile ? 13.5 : 14.5,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => _showChangeEmailSheet(
+                                        ctx,
+                                        profile,
+                                      ),
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: orange.withOpacity(0.10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        child: const Icon(
+                                          Icons.edit_outlined,
+                                          color: orange,
+                                          size: 17,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+
                                 const SizedBox(height: 10),
+
+                                // Badge akun aktif
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
@@ -469,7 +513,10 @@ class DashboardPage extends StatelessWidget {
                                     ),
                                   ),
                                 ),
+
                                 const SizedBox(height: 26),
+
+                                // ── Menu profil ─────────────────────────
                                 _buildProfileMenu(
                                   icon: Icons.info_rounded,
                                   title: 'Tentang Aplikasi',
@@ -499,21 +546,24 @@ class DashboardPage extends StatelessWidget {
                                     );
                                   },
                                 ),
+
                                 _buildProfileMenu(
-  icon: Icons.history_rounded,
-  title: 'Activity Log',
-  subtitle: 'Lihat riwayat aktivitas pengguna',
-  onTap: () {
-    Get.toNamed(AppRoutes.ACTIVITY_LOG);
-  },
-),
+                                  icon: Icons.history_rounded,
+                                  title: 'Activity Log',
+                                  subtitle: 'Lihat riwayat aktivitas pengguna',
+                                  onTap: () {
+                                    Get.toNamed(AppRoutes.ACTIVITY_LOG);
+                                  },
+                                ),
+
                                 Obx(
                                   () => _buildProfileMenu(
                                     icon: Icons.logout_rounded,
                                     title: profile.isLoggingOut.value
                                         ? 'Logout...'
                                         : 'Logout',
-                                    subtitle: 'Keluar dari akun SmartFloorPlan',
+                                    subtitle:
+                                        'Keluar dari akun SmartFloorPlan',
                                     iconColor: Colors.red,
                                     textColor: Colors.red,
                                     onTap: profile.isLoggingOut.value
@@ -536,6 +586,181 @@ class DashboardPage extends StatelessWidget {
       ),
     );
   }
+
+  // ═══════════════════════════════════════════════════
+  //  BOTTOM SHEET — GANTI EMAIL
+  // ═══════════════════════════════════════════════════
+
+  void _showChangeEmailSheet(
+    BuildContext context,
+    ProfileController profile,
+  ) {
+    profile.emailController.clear();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 32,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDE3EE),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+
+            // Judul
+            const Text(
+              'Ganti Email',
+              style: TextStyle(
+                color: navy,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Supabase akan mengirim link konfirmasi ke email baru. Email berganti setelah link dikonfirmasi.',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 22),
+
+            // Input email baru
+            TextField(
+              controller: profile.emailController,
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+              style: const TextStyle(
+                color: navy,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                labelText: 'Email baru',
+                labelStyle: const TextStyle(
+                  color: Colors.black45,
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.alternate_email_rounded,
+                  color: orange,
+                  size: 20,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE3EAF2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE3EAF2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: orange, width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Tombol kirim konfirmasi
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: profile.isUpdatingEmail.value
+                      ? null
+                      : () => profile.updateEmail(
+                            profile.emailController.text,
+                          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: orange,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: orange.withOpacity(0.45),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: profile.isUpdatingEmail.value
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text(
+                          'Kirim Konfirmasi',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Tombol batal
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: TextButton(
+                onPressed: () => Get.back(),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black45,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Batal',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  PROFILE MENU TILE
+  // ═══════════════════════════════════════════════════
 
   Widget _buildProfileMenu({
     required IconData icon,
@@ -606,6 +831,10 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
+  // ═══════════════════════════════════════════════════
+  //  BOTTOM NAV
+  // ═══════════════════════════════════════════════════
+
   Widget _buildBottomNav() {
     return Obx(() {
       final currentIndex = controller.selectedIndex.value;
@@ -646,9 +875,9 @@ class DashboardPage extends StatelessWidget {
               label: 'Beranda',
             ),
             BottomNavigationBarItem(
-      icon: Icon(Icons.analytics), // ✅ TAMBAHKAN INI
-      label: 'Analisis',
-    ),
+              icon: Icon(Icons.analytics),
+              label: 'Analisis',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.history_rounded),
               label: 'Riwayat',

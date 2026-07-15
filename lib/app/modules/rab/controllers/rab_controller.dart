@@ -37,7 +37,7 @@ class RabController extends GetxController {
 
   List<Map<String, dynamic>> rawMaterialOptions = [];
   dynamic rooms;
-
+  final selectedTukang = ''.obs;
   final List<String> tampilKategori = const [
     'Material Dinding',
     'Semen',
@@ -88,6 +88,12 @@ class RabController extends GetxController {
 }
 
     final selected = args['selectedMaterials'];
+    selectedTukang.value =
+    args['jenisTukang'] ??
+    args['jenis_tukang'] ??
+    'Tukang Harian';
+
+    print('RAB JENIS TUKANG = ${selectedTukang.value}');
 
     if (selected is Map) {
       selected.forEach((key, value) {
