@@ -59,7 +59,7 @@ def scan_denah():
         }), 400
 
     try:
-        result = scan_floorplan(file_bytes)
+        result = scan_floorplan_image(file_bytes)
 
     except Exception as e:
         traceback.print_exc()

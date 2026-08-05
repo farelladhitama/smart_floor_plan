@@ -119,12 +119,12 @@ def scan_floorplan_image(file_bytes: bytes) -> dict | str:
             "points": box["points"],   # bentuk poligon asli, bukan cuma kotak
             "fill_ratio": round(box["fill_ratio"], 3),
         })
-
     return {
-        "total_rooms": len(rooms),
-        "image_width": crop_w,
-        "image_height": crop_h,
-        "rooms": rooms,
+    "valid": True,
+    "total_rooms": len(rooms),
+    "image_width": crop_w,
+    "image_height": crop_h,
+    "rooms": rooms,
         "debug": {
             "method": "opencv_structural_v2",
             "original_width": original_width,

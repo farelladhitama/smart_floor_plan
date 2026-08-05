@@ -10,6 +10,8 @@ import 'package:smart_floor_plan/app/modules/hasil_denah/controllers/hasil_denah
 import 'package:smart_floor_plan/app/modules/hasil_denah/views/hasil_denah_page.dart'
     as hasil_view;
 import 'package:smart_floor_plan/app/services/activity_log_service.dart';
+import 'package:smart_floor_plan/app/services/ai_design_service.dart';
+import 'package:smart_floor_plan/app/data/models/ai_design_params.dart';
 
 class GenerateFormController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
@@ -17,19 +19,17 @@ class GenerateFormController extends GetxController {
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  
-
   final TextEditingController lebarController = TextEditingController();
   final TextEditingController panjangController = TextEditingController();
   final TextEditingController tambahanRuanganController = TextEditingController();
 
   final RxString selectedMaterial = 'batu bata merah'.obs;
   final List<String> tukangOptions = [
-  'Tukang Harian',
-  'Tukang Borongan',
-];
+    'Tukang Harian',
+    'Tukang Borongan',
+  ];
 
-final RxString selectedTukang = 'Tukang Harian'.obs;
+  final RxString selectedTukang = 'Tukang Harian'.obs;
 
   final List<String> materialCategories = const [
     'Material Dinding',
@@ -62,6 +62,12 @@ final RxString selectedTukang = 'Tukang Harian'.obs;
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
+  // ============= AI RELATED =============
+  final TextEditingController aiPromptController = TextEditingController();
+  final RxBool isLoadingAI = false.obs;
+  final Rx<AIDesignParams?> aiParams = Rx<AIDesignParams?>(null);
+  final RxBool useAIAnalysis = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -73,6 +79,162 @@ final RxString selectedTukang = 'Tukang Harian'.obs;
     loadMaterialOptions();
   }
 
+  // ============= AI METHODS =============
+  Future<void> analisisAI() async {
+    final prompt = aiPromptController.text.trim();
+    if (prompt.isEmpty) {
+      _showSnackBar(
+        title: 'Prompt Kosong',
+        message: 'Tuliskan kebutuhan desain rumah Anda terlebih dahulu.',
+      );
+      return;
+    }
+
+    if (isLoadingAI.value) return;
+
+    try {
+      isLoadingAI.value = true;
+      _showLoadingDialogAI();
+
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      final service = AIDesignService();
+      final params = await service.analyzePrompt(prompt);
+
+      aiParams.value = params;
+      useAIAnalysis.value = true;
+
+      _applyAIParams(params);
+
+      _closeAllDialogs();
+
+      _showSnackBar(
+        title: '✅ Analisis Selesai',
+        message: 'AI: ${params.style} dengan ${params.bedroom} kamar, ${params.bathroom} KM/WC',
+      );
+
+      await analisisRekomendasiRuang();
+
+    } catch (e) {
+      _closeAllDialogs();
+      _showSnackBar(
+        title: 'Error',
+        message: 'Gagal menganalisis: ${e.toString()}',
+      );
+    } finally {
+      isLoadingAI.value = false;
+      _closeAllDialogs();
+    }
+  }
+
+  void _applyAIParams(AIDesignParams params) {
+    final extraRooms = params.extraRooms;
+    if (extraRooms.isNotEmpty) {
+      tambahanRuanganController.text = extraRooms.join(', ');
+    }
+
+    final baseWidth = 6.0 + (params.bedroom * 1.5) + (params.bathroom * 1.0) + (params.garage * 1.5);
+    final baseLength = 8.0 + (params.extraRooms.length * 1.5);
+    
+    if (lebarController.text.isEmpty) {
+      lebarController.text = baseWidth.toStringAsFixed(1);
+    }
+    if (panjangController.text.isEmpty) {
+      panjangController.text = baseLength.toStringAsFixed(1);
+    }
+  }
+
+  void resetAI() {
+    aiPromptController.clear();
+    aiParams.value = null;
+    useAIAnalysis.value = false;
+    _closeAllDialogs();
+    _showSnackBar(
+      title: 'Reset AI',
+      message: 'Analisis AI di-reset, kembali ke mode manual',
+    );
+  }
+
+  void _showLoadingDialogAI() {
+    try {
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+    } catch (_) {}
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      try {
+        if (Get.isDialogOpen == true) return;
+        
+        Get.dialog(
+          Dialog(
+            backgroundColor: Colors.white,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 34),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: orange.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: orange,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    '🧠 AI Menganalisis Kebutuhan',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Sistem AI sedang memproses prompt Anda...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 13,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      color: orange,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          barrierDismissible: false,
+        );
+      } catch (e) {
+        print('⚠️ Gagal menampilkan dialog AI: $e');
+      }
+    });
+  }
+
+  // ============= EXISTING METHODS =============
+  
   Future<void> loadMaterialOptions() async {
     try {
       isLoadingMaterials.value = true;
@@ -254,9 +416,6 @@ final RxString selectedTukang = 'Tukang Harian'.obs;
 
       _showLoadingDialog();
 
-      await Future.delayed(const Duration(milliseconds: 900));
-      await Future.delayed(const Duration(milliseconds: 700));
-
       final int bedroomCount = estimateBedroomCount(
         landWidth: lebarRumah,
         landLength: panjangRumah,
@@ -286,100 +445,97 @@ final RxString selectedTukang = 'Tukang Harian'.obs;
 
       rekomendasiRuang.assignAll(result);
       hasAnalyzedRecommendation.value = true;
+
+      // ⭐ TUNGGU 500ms, LALU TUTUP DIALOG
+      await Future.delayed(const Duration(milliseconds: 500));
+      _closeAllDialogs();
+
+    } catch (e) {
+      _closeAllDialogs();
+      _showSnackBar(
+        title: 'Error',
+        message: 'Gagal analisis ruang: ${e.toString()}',
+      );
     } finally {
       isAnalyzingRecommendation.value = false;
-      _closeLoadingDialogIfOpen();    
+      _closeAllDialogs();
     }
   }
-
-  Future<void> prosesGenerate() async {
-    if (!formKey.currentState!.validate()) return;
-
-    final double lebarRumah = double.parse(lebarController.text.trim());
-    final double panjangRumah = double.parse(panjangController.text.trim());
-
-    final int bedroomCount = estimateBedroomCount(
-      landWidth: lebarRumah,
-      landLength: panjangRumah,
-    );
-
-    final List<RoomRecommendation> extraRooms = _buildExtraRoomRecommendations(
-      landWidth: lebarRumah,
-      landLength: panjangRumah,
-    );
-
-    final List<String> extraRoomNames = _extraRoomNames(extraRooms);
-
-    final SmartFloorPlanResult result = SmartFloorPlanEngine.generate(
-      
-      landWidth: lebarRumah,
-      landLength: panjangRumah,
-      bedroomCount: bedroomCount,
-      extraRooms: extraRooms,
-    );
-
-    final List<RoomModel> generatedRooms = result.rooms;
-
-    if (generatedRooms.isEmpty) {
-      _showSnackBar(
-        title: 'Gagal Generate',
-        message:
-            'Denah belum dapat dibuat. Coba perbesar ukuran lahan atau ubah dimensi.',
-      );
-      return;
-    }
-
-    if (Get.isRegistered<hasil_controller.HasilDenahController>()) {
-      Get.delete<hasil_controller.HasilDenahController>();
-    }
-
-    Get.put(hasil_controller.HasilDenahController());
-
-    final String materialDinding =
-        selectedMaterials['Material Dinding'] ?? selectedMaterial.value;
-
-await ActivityLogService.addLog(
-  title: "Generate Denah",
-  description:
-      "Generate denah ${result.landWidth} x ${result.landLength} m ($bedroomCount kamar)",
-  icon: "home",
-);
-    Get.to(
-  () => hasil_view.HasilDenahPage(
-    rooms: generatedRooms,
-    inputLebarRumah: result.landWidth,
-    inputPanjangRumah: result.landLength,
-    material: materialDinding,
-    jumlahKamar: bedroomCount,
-    ruangTambahan: extraRoomNames,
-
-    // TAMBAHKAN INI
-    totalLuas: result.landWidth * result.landLength,
-    selectedMaterials: Map<String, String>.from(selectedMaterials),
-    jenisTukang: selectedTukang.value,
-  ),
-  
-      arguments: {
-        'selectedMaterials': Map<String, String>.from(selectedMaterials),
-        'ruangTambahan': extraRoomNames,
-        'material': materialDinding,
-        'jenisTukang': selectedTukang.value,
-        'luasBangunan': result.landWidth * result.landLength,
-        'totalLuas': result.landWidth * result.landLength,
-        'inputLebarRumah': result.landWidth,
-        'inputPanjangRumah': result.landLength,
-        'jenisTukang': selectedTukang.value,
-      },
-    );
-  }
-
 
   List<RoomRecommendation> _buildExtraRoomRecommendations({
     required double landWidth,
     required double landLength,
   }) {
-    final List<String> names = _parseTambahanRuanganInput();
+    if (useAIAnalysis.value && aiParams.value != null) {
+      final params = aiParams.value!;
+      final extraRooms = params.extraRooms;
+      
+      if (extraRooms.isEmpty) {
+        return <RoomRecommendation>[];
+      }
 
+      final double area = landWidth * landLength;
+      final List<RoomRecommendation> extras = <RoomRecommendation>[];
+
+      for (final String name in extraRooms.take(8)) {
+        final String lowerName = name.toLowerCase();
+        String category = 'room';
+        double width = area <= 60 ? 1.8 : area <= 140 ? 2.2 : 2.8;
+        double height = area <= 60 ? 1.6 : area <= 140 ? 2.0 : 2.4;
+
+        if (lowerName.contains('mushola') || lowerName.contains('ibadah')) {
+          category = 'room';
+          width = area <= 60 ? 2.0 : 2.8;
+          height = area <= 60 ? 2.0 : 2.8;
+        } else if (lowerName.contains('kerja') || lowerName.contains('office') || lowerName.contains('study')) {
+          category = 'room';
+          width = area <= 60 ? 2.0 : area <= 140 ? 2.6 : 3.2;
+          height = area <= 60 ? 1.8 : area <= 140 ? 2.4 : 2.8;
+        } else if (lowerName.contains('tamu') || lowerName.contains('living')) {
+          category = 'living';
+          width = area <= 60 ? 2.4 : area <= 140 ? 3.2 : 4.0;
+          height = area <= 60 ? 2.2 : area <= 140 ? 2.8 : 3.4;
+        } else if (lowerName.contains('keluarga') || lowerName.contains('family')) {
+          category = 'family';
+          width = area <= 60 ? 2.6 : area <= 140 ? 3.6 : 4.4;
+          height = area <= 60 ? 2.2 : area <= 140 ? 3.0 : 3.6;
+        } else if (lowerName.contains('dapur') || lowerName.contains('kitchen')) {
+          category = 'kitchen';
+          width = area <= 60 ? 2.2 : 2.8;
+          height = area <= 60 ? 2.0 : 2.6;
+        } else if (lowerName.contains('garasi') || lowerName.contains('carport')) {
+          category = 'outdoor';
+          width = area <= 60 ? 2.6 : 3.2;
+          height = area <= 60 ? 3.2 : 4.2;
+        } else if (lowerName.contains('gudang') || lowerName.contains('storage')) {
+          category = 'service';
+          width = area <= 60 ? 1.6 : 2.0;
+          height = area <= 60 ? 1.6 : 2.0;
+        } else if (lowerName.contains('cuci') || lowerName.contains('laundry')) {
+          category = 'service';
+          width = area <= 60 ? 1.6 : 2.0;
+          height = area <= 60 ? 1.6 : 2.2;
+        } else if (lowerName.contains('kolam') || lowerName.contains('pool')) {
+          category = 'outdoor';
+          width = area <= 60 ? 2.0 : 3.0;
+          height = area <= 60 ? 2.0 : 3.0;
+        }
+
+        extras.add(
+          RoomRecommendation(
+            name: _formatRoomName(name),
+            category: category,
+            width: width,
+            height: height,
+            selected: true,
+          ),
+        );
+      }
+
+      return extras;
+    }
+
+    final List<String> names = _parseTambahanRuanganInput();
     if (names.isEmpty) {
       return <RoomRecommendation>[];
     }
@@ -510,90 +666,215 @@ await ActivityLogService.addLog(
     analisisRekomendasiRuang();
   }
 
-  void _showLoadingDialog() {
-    if (Get.isDialogOpen == true) return;
+  Future<void> prosesGenerate() async {
+    if (!formKey.currentState!.validate()) return;
 
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 34),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: orange.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.architecture_rounded,
-                  color: orange,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Menganalisis Kebutuhan Ruang',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: navy,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Sistem sedang menyusun rekomendasi ruang berdasarkan ukuran lahan.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 13,
-                  height: 1.45,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 22),
-              const SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  color: orange,
-                  strokeWidth: 3,
-                ),
-              ),
-            ],
-          ),
-        ),
+    final double lebarRumah = double.parse(lebarController.text.trim());
+    final double panjangRumah = double.parse(panjangController.text.trim());
+
+    final int bedroomCount = estimateBedroomCount(
+      landWidth: lebarRumah,
+      landLength: panjangRumah,
+    );
+
+    final List<RoomRecommendation> extraRooms = _buildExtraRoomRecommendations(
+      landWidth: lebarRumah,
+      landLength: panjangRumah,
+    );
+
+    final List<String> extraRoomNames = _extraRoomNames(extraRooms);
+
+    final SmartFloorPlanResult result = SmartFloorPlanEngine.generate(
+      landWidth: lebarRumah,
+      landLength: panjangRumah,
+      bedroomCount: bedroomCount,
+      extraRooms: extraRooms,
+      style: useAIAnalysis.value && aiParams.value != null 
+          ? aiParams.value!.style 
+          : 'Modern',
+      priority: useAIAnalysis.value && aiParams.value != null 
+          ? aiParams.value!.priority 
+          : 'Fungsi',
+    );
+
+    final List<RoomModel> generatedRooms = result.rooms;
+
+    if (generatedRooms.isEmpty) {
+      _showSnackBar(
+        title: 'Gagal Generate',
+        message: 'Denah belum dapat dibuat. Coba perbesar ukuran lahan atau ubah dimensi.',
+      );
+      return;
+    }
+
+    if (Get.isRegistered<hasil_controller.HasilDenahController>()) {
+      Get.delete<hasil_controller.HasilDenahController>();
+    }
+
+    Get.put(hasil_controller.HasilDenahController());
+
+    final String materialDinding =
+        selectedMaterials['Material Dinding'] ?? selectedMaterial.value;
+
+    await ActivityLogService.addLog(
+      title: "Generate Denah",
+      description: "Generate denah ${result.landWidth} x ${result.landLength} m ($bedroomCount kamar)",
+      icon: "home",
+    );
+    
+    Get.to(
+      () => hasil_view.HasilDenahPage(
+        rooms: generatedRooms,
+        inputLebarRumah: result.landWidth,
+        inputPanjangRumah: result.landLength,
+        material: materialDinding,
+        jumlahKamar: bedroomCount,
+        ruangTambahan: extraRoomNames,
+        totalLuas: result.landWidth * result.landLength,
+        selectedMaterials: Map<String, String>.from(selectedMaterials),
+        jenisTukang: selectedTukang.value,
       ),
-      barrierDismissible: false,
+      arguments: {
+        'selectedMaterials': Map<String, String>.from(selectedMaterials),
+        'ruangTambahan': extraRoomNames,
+        'material': materialDinding,
+        'jenisTukang': selectedTukang.value,
+        'luasBangunan': result.landWidth * result.landLength,
+        'totalLuas': result.landWidth * result.landLength,
+        'inputLebarRumah': result.landWidth,
+        'inputPanjangRumah': result.landLength,
+      },
     );
   }
 
-  void _closeLoadingDialogIfOpen() {
-    if (Get.isDialogOpen == true) Get.back();
+  void _showLoadingDialog() {
+    try {
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+    } catch (_) {}
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      try {
+        if (Get.isDialogOpen == true) return;
+        
+        Get.dialog(
+          Dialog(
+            backgroundColor: Colors.white,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 34),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: orange.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.architecture_rounded,
+                      color: orange,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Menganalisis Kebutuhan Ruang',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Sistem sedang menyusun rekomendasi ruang berdasarkan ukuran lahan.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 13,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      color: orange,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          barrierDismissible: false,
+        );
+      } catch (e) {
+        print('⚠️ Gagal menampilkan dialog rekomendasi: $e');
+      }
+    });
+  }
+
+  // ⭐ METHOD PALING PENTING - CLOSE ALL DIALOGS
+  void _closeAllDialogs() {
+    // TUNGGU 100ms AGAR DIALOG SIAP DITUTUP
+    Future.delayed(const Duration(milliseconds: 100), () {
+      try {
+        int count = 0;
+        while (Get.isDialogOpen == true && count < 10) {
+          Get.back();
+          count++;
+          print('✅ Dialog ditutup ke-$count');
+        }
+        if (count == 0) {
+          print('ℹ️ Tidak ada dialog yang terbuka');
+        } else {
+          print('✅ TOTAL $count dialog berhasil ditutup!');
+        }
+      } catch (e) {
+        print('⚠️ Error tutup dialog: $e');
+        // FORCE CLOSE PAKAI CARA LAIN
+        try {
+          if (Get.isDialogOpen == true) {
+            Get.back();
+          }
+        } catch (_) {}
+      }
+    });
   }
 
   void _showSnackBar({
     required String title,
     required String message,
   }) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: navy,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 14,
-      duration: const Duration(seconds: 2),
-    );
+    try {
+      Get.closeCurrentSnackbar();
+    } catch (_) {}
+    
+    try {
+      Get.snackbar(
+        title,
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: navy,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      print('⚠️ Snackbar error: $e');
+    }
   }
 
   String? validateNumber(String? value) {
@@ -609,7 +890,7 @@ await ActivityLogService.addLog(
 
   @override
   void onClose() {
-    _closeLoadingDialogIfOpen();
+    _closeAllDialogs();
 
     lebarController.removeListener(_clearRecommendationOnInputChange);
     panjangController.removeListener(_clearRecommendationOnInputChange);
@@ -618,6 +899,7 @@ await ActivityLogService.addLog(
     lebarController.dispose();
     panjangController.dispose();
     tambahanRuanganController.dispose();
+    aiPromptController.dispose();
 
     super.onClose();
   }

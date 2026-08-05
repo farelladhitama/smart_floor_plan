@@ -7,8 +7,9 @@ import 'app/core/supabase/supabase_config.dart';
 import 'app/core/theme/app_colors.dart';
 import 'app/routes/app_pages.dart';
 import 'firebase_options.dart';
-import 'app/services/material_item_service.dart'; // ✅ SUDAH BENAR
+import 'app/services/material_item_service.dart';
 import 'app/modules/analysis/controllers/analysis_controller.dart';
+// import 'app/services/ai_design_service.dart'; // TIDAK PERLU
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,9 @@ Future<void> main() async {
     url: SupabaseConfig.url,
     anonKey: SupabaseConfig.publishableKey,
   );
+
+  // 🔑 TIDAK PERLU SET API KEY - PAKAI SIMULASI
+  // AIDesignService.setApiKey('...');
 
   runApp(const SmartFloorPlanApp());
 }
@@ -49,7 +53,6 @@ class SmartFloorPlanApp extends StatelessWidget {
 class AppBinding extends Bindings {
   @override
   void dependencies() {
-    // ✅ PERBAIKAN: MaterialItemService, BUKAN MaterialService
     Get.put(MaterialItemService(), permanent: true);
     Get.put(AnalysisController(), permanent: true);
   }

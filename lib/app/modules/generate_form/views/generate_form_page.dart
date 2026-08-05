@@ -64,10 +64,13 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                         _buildHeroCard(isSmallMobile),
                         const SizedBox(height: 28),
 
+                        // ===== AI ASSISTANT =====
+                        _buildAIAssistant(),
+                        const SizedBox(height: 28),
+
                         _sectionTitle(
                           title: 'Dimensi Lahan',
-                          subtitle:
-                              'Masukkan ukuran lebar dan panjang tanah untuk memulai analisis denah.',
+                          subtitle: 'Masukkan ukuran lebar dan panjang tanah untuk memulai analisis denah.',
                         ),
                         const SizedBox(height: 14),
 
@@ -84,8 +87,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                                   _buildInputField(
                                     label: 'Panjang Lahan (m)',
                                     hint: 'Contoh: 12',
-                                    textController:
-                                        controller.panjangController,
+                                    textController: controller.panjangController,
                                     icon: Icons.square_foot_rounded,
                                   ),
                                 ],
@@ -96,8 +98,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                                     child: _buildInputField(
                                       label: 'Lebar Lahan (m)',
                                       hint: 'Contoh: 10',
-                                      textController:
-                                          controller.lebarController,
+                                      textController: controller.lebarController,
                                       icon: Icons.straighten_rounded,
                                     ),
                                   ),
@@ -106,8 +107,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                                     child: _buildInputField(
                                       label: 'Panjang Lahan (m)',
                                       hint: 'Contoh: 12',
-                                      textController:
-                                          controller.panjangController,
+                                      textController: controller.panjangController,
                                       icon: Icons.square_foot_rounded,
                                     ),
                                   ),
@@ -118,8 +118,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
 
                         _sectionTitle(
                           title: 'Pilihan Material Utama',
-                          subtitle:
-                              'Pilih material utama sesuai data harga dari hasil Big Data/API.',
+                          subtitle: 'Pilih material utama sesuai data harga dari hasil Big Data/API.',
                         ),
                         const SizedBox(height: 14),
                         _buildMaterialDropdown(),
@@ -128,8 +127,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
 
                         _sectionTitle(
                           title: 'Tambahan Ruangan',
-                          subtitle:
-                              'Tulis kebutuhan ruang tambahan, pisahkan dengan koma. Contoh: mushola, gudang, ruang kerja.',
+                          subtitle: 'Tulis kebutuhan ruang tambahan, pisahkan dengan koma. Contoh: mushola, gudang, ruang kerja.',
                         ),
                         const SizedBox(height: 14),
                         _buildTambahanRuanganField(),
@@ -137,72 +135,33 @@ class GenerateFormPage extends GetView<GenerateFormController> {
                         const SizedBox(height: 28),
 
                         _sectionTitle(
-                          title: 'Rekomendasi Ruangan',
-                          subtitle:
-                              'Sistem akan menyarankan tipe rumah, kebutuhan ruang, dan estimasi luas berdasarkan ukuran lahan.',
+                          title: 'Jenis Tukang',
+                          subtitle: 'Pilih metode pengerjaan proyek.',
                         ),
                         const SizedBox(height: 14),
-                        _buildRecommendationButton(),
-                        const SizedBox(height: 16),
-                        _buildRecommendationSection(),
-                        const SizedBox(height: 28),
 
-_sectionTitle(
-  title: 'Jenis Tukang',
-  subtitle: 'Pilih metode pengerjaan proyek.',
-),
-
-const SizedBox(height: 14),
-
-Obx(
-  () => DropdownButtonFormField<String>(
-    value: controller.selectedTukang.value,
-    decoration: InputDecoration(
-      labelText: 'Pilih Jenis Tukang',
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
-    items: controller.tukangOptions.map((item) {
-      return DropdownMenuItem<String>(
-        value: item,
-        child: Text(item),
-      );
-    }).toList(),
-    onChanged: (value) {
-      if (value != null) {
-        controller.selectedTukang.value = value;
-      }
-    },
-  ),
-),
-
-const SizedBox(height: 34),
-
-const SizedBox(height: 14),
-
-Obx(
-  () => DropdownButtonFormField<String>(
-    value: controller.selectedTukang.value,
-    decoration: InputDecoration(
-      labelText: 'Pilih Jenis Tukang',
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
-    items: controller.tukangOptions.map((item) {
-      return DropdownMenuItem(
-        value: item,
-        child: Text(item),
-      );
-    }).toList(),
-    onChanged: (value) {
-      if (value != null) {
-        controller.selectedTukang.value = value;
-      }
-    },
-  ),
-),
+                        Obx(
+                          () => DropdownButtonFormField<String>(
+                            value: controller.selectedTukang.value,
+                            decoration: InputDecoration(
+                              labelText: 'Pilih Jenis Tukang',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            items: controller.tukangOptions.map((item) {
+                              return DropdownMenuItem<String>(
+                                value: item,
+                                child: Text(item),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                controller.selectedTukang.value = value;
+                              }
+                            },
+                          ),
+                        ),
                         const SizedBox(height: 34),
                         _buildGenerateButton(),
                       ],
@@ -217,6 +176,306 @@ Obx(
     );
   }
 
+  // ============= AI ASSISTANT WIDGET =============
+  Widget _buildAIAssistant() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            navy,
+            navySoft,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: navy.withOpacity(0.18),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: orange,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text(
+                  '🧠 AI Smart Design Assistant',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Obx(
+                () => Visibility(
+                  visible: controller.useAIAnalysis.value,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.green.withOpacity(0.3),
+                      ),
+                    ),
+                    child: const Text(
+                      'AI Active',
+                      style: TextStyle(
+                        color: Colors.greenAccent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Jelaskan kebutuhan rumah Anda secara natural. AI akan menganalisis dan memberikan rekomendasi desain terbaik.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.4,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // TextField Prompt
+          TextFormField(
+            controller: controller.aiPromptController,
+            maxLines: 3,
+            minLines: 2,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Contoh: Saya ingin rumah minimalis modern untuk keluarga 5 orang dengan 3 kamar tidur, 2 kamar mandi, ruang kerja, mushola, taman belakang, garasi 2 mobil...',
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.35),
+                fontSize: 12,
+              ),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.08),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: Colors.white.withOpacity(0.12),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: orange.withOpacity(0.6),
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Obx(
+                  () => SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: controller.isLoadingAI.value
+                          ? null
+                          : controller.analisisAI,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: orange,
+                        disabledBackgroundColor: orange.withOpacity(0.5),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: controller.isLoadingAI.value
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.auto_awesome_rounded, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Analisis dengan AI',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Obx(
+                () => Visibility(
+                  visible: controller.useAIAnalysis.value,
+                  child: SizedBox(
+                    height: 48,
+                    child: IconButton(
+                      onPressed: controller.resetAI,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Hasil AI
+          Obx(
+            () {
+              final params = controller.aiParams.value;
+              if (params == null) return const SizedBox.shrink();
+
+              return Container(
+                margin: const EdgeInsets.only(top: 14),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.08),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '📊 Hasil Analisis AI',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _buildAITag('🏠 ${params.style}'),
+                        _buildAITag('👤 ${params.familySize} orang'),
+                        _buildAITag('🛏️ ${params.bedroom} kamar'),
+                        _buildAITag('🚿 ${params.bathroom} km/wc'),
+                        if (params.garage > 0)
+                          _buildAITag('🚗 ${params.garage} mobil'),
+                        _buildAITag('🎯 ${params.priority}'),
+                        ...params.extraRooms.map(
+                          (room) => _buildAITag('➕ $room'),
+                        ),
+                        if (params.garden != 'Tidak Ada')
+                          _buildAITag('🌿 Taman ${params.garden.toLowerCase()}'),
+                      ],
+                    ),
+                    if (params.budget != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '💰 Budget: Rp ${_formatCurrency(params.budget!)}',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCurrency(double value) {
+    if (value >= 1000000000) {
+      return '${(value / 1000000000).toStringAsFixed(1)} Miliar';
+    } else if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(0)} Juta';
+    } else {
+      return value.toStringAsFixed(0);
+    }
+  }
+
+  Widget _buildAITag(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.06),
+        ),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  // ============= EXISTING WIDGETS =============
+  
   Widget _buildHeroCard(bool isSmallMobile) {
     return Container(
       width: double.infinity,
@@ -531,121 +790,6 @@ Obx(
     );
   }
 
-  Widget _buildInitialRabPreview() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF4EC),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: orange.withOpacity(0.28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: orange.withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: orange.withOpacity(0.16),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.receipt_long_rounded,
-                  color: orange,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Estimasi Awal Kebutuhan Bahan',
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Setelah mengisi lebar dan panjang lahan, kamu bisa melihat perkiraan awal bahan bangunan seperti batu bata, semen, pasir, besi, keramik, cat, pipa, kabel, dan plafon.',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 13,
-              height: 1.45,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final lebar = double.tryParse(
-                  controller.lebarController.text.replaceAll(',', '.'),
-                );
-                final panjang = double.tryParse(
-                  controller.panjangController.text.replaceAll(',', '.'),
-                );
-
-                if (lebar == null || panjang == null || lebar <= 0 || panjang <= 0) {
-                  Get.snackbar(
-                    'Data belum lengkap',
-                    'Isi lebar dan panjang lahan terlebih dahulu.',
-                    snackPosition: SnackPosition.BOTTOM,
-                  );
-                  return;
-                }
-
-                final luas = lebar * panjang;
-
-                Get.toNamed(
-                  AppRoutes.rab,
-                  arguments: {
-                    'luasBangunan': luas,
-                    'totalLuas': luas,
-                    'inputLebarRumah': lebar,
-                    'inputPanjangRumah': panjang,
-                  },
-                );
-              },
-              icon: const Icon(Icons.calculate_rounded),
-              label: const Text(
-                'LIHAT ESTIMASI RAB AWAL',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTambahanRuanganField() {
     return TextFormField(
       controller: controller.tambahanRuanganController,
@@ -697,582 +841,6 @@ Obx(
     );
   }
 
-  Widget _buildRecommendationButton() {
-    return Obx(
-      () {
-        final bool isLoading = controller.isAnalyzingRecommendation.value;
-
-        return SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton.icon(
-            onPressed:
-                isLoading ? null : () => controller.analisisRekomendasiRuang(),
-            icon: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.4,
-                    ),
-                  )
-                : const Icon(
-                    Icons.auto_fix_high_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-            label: Text(
-              isLoading ? 'Menganalisis...' : 'Rekomendasi Ruangan',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: navy,
-              disabledBackgroundColor: navy.withOpacity(0.65),
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shadowColor: navy.withOpacity(0.25),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRecommendationSection() {
-    return Obx(
-      () {
-        final bool isLoading = controller.isAnalyzingRecommendation.value;
-        final bool hasResult = controller.hasAnalyzedRecommendation.value;
-        final bool hasRecommendation = controller.rekomendasiRuang.isNotEmpty;
-
-        if (!isLoading && !hasResult && !hasRecommendation) {
-          return _buildRecommendationPlaceholder();
-        }
-
-        if (isLoading) {
-          return _buildRecommendationLoading();
-        }
-
-        if (hasResult && !hasRecommendation) {
-          return _buildRecommendationEmpty();
-        }
-
-        return _buildRecommendationResult();
-      },
-    );
-  }
-
-  Widget _buildRecommendationPlaceholder() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: borderColor,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: orangeSoft,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: const Icon(
-              Icons.tips_and_updates_rounded,
-              color: orange,
-              size: 23,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Klik tombol Rekomendasi Ruangan setelah mengisi lebar, panjang, dan material.',
-              style: TextStyle(
-                color: mutedText,
-                fontSize: 12.5,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendationLoading() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: orange.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: orange.withOpacity(0.22),
-        ),
-      ),
-      child: const Row(
-        children: [
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(
-              color: orange,
-              strokeWidth: 2.8,
-            ),
-          ),
-          SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              'Sistem sedang menyusun rekomendasi ruang berdasarkan ukuran lahan...',
-              style: TextStyle(
-                color: navy,
-                fontSize: 13,
-                height: 1.45,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendationEmpty() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: borderColor,
-        ),
-      ),
-      child: const Row(
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            color: mutedText,
-            size: 24,
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Belum ada rekomendasi. Coba perbesar ukuran lahan atau ubah dimensi.',
-              style: TextStyle(
-                color: mutedText,
-                fontSize: 12.5,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendationResult() {
-    final double landWidth =
-        double.tryParse(controller.lebarController.text.trim()) ?? 0;
-    final double landLength =
-        double.tryParse(controller.panjangController.text.trim()) ?? 0;
-    final double landArea = landWidth * landLength;
-
-    final double totalRecommendedArea = controller.rekomendasiRuang.fold<double>(
-      0,
-      (total, room) => total + (room.width * room.height),
-    );
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: borderColor,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: navy.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildAnalysisCard(
-            landWidth: landWidth,
-            landLength: landLength,
-            landArea: landArea,
-            totalRecommendedArea: totalRecommendedArea,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Daftar Ruangan',
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: orangeSoft,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${controller.rekomendasiRuang.length} ruang',
-                  style: const TextStyle(
-                    color: orange,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...controller.rekomendasiRuang.map((room) {
-            final double area = room.width * room.height;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 13,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.circular(17),
-                border: Border.all(
-                  color: borderColor,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: orangeSoft,
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: Icon(
-                      _recommendationIcon(room.category),
-                      color: orange,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          room.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: navy,
-                            fontSize: 13.8,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${room.width.toStringAsFixed(1)} m x ${room.height.toStringAsFixed(1)} m  |  ${area.toStringAsFixed(1)} m2',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: mutedText,
-                            fontSize: 11.7,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnalysisCard({
-    required double landWidth,
-    required double landLength,
-    required double landArea,
-    required double totalRecommendedArea,
-  }) {
-    final String typeTitle = _getHouseTypeTitle(landArea);
-    final String description = _getHouseTypeDescription(landArea);
-    final String roomSummary = _getRecommendedRoomSummary();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            orange.withOpacity(0.13),
-            orange.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: orange.withOpacity(0.20),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.88),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(
-                  Icons.analytics_rounded,
-                  color: orange,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      typeTitle,
-                      style: const TextStyle(
-                        color: navy,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${landWidth.toStringAsFixed(1)} m x ${landLength.toStringAsFixed(1)} m  |  ${landArea.toStringAsFixed(1)} m2',
-                      style: const TextStyle(
-                        color: mutedText,
-                        fontSize: 11.8,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            description,
-            style: const TextStyle(
-              color: navy,
-              fontSize: 12.7,
-              height: 1.48,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 9),
-          Text(
-            roomSummary,
-            style: const TextStyle(
-              color: mutedText,
-              fontSize: 12.2,
-              height: 1.45,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMiniInfo(
-                  title: 'Luas Lahan',
-                  value: '${landArea.toStringAsFixed(1)} m2',
-                  icon: Icons.crop_square_rounded,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMiniInfo(
-                  title: 'Luas Ruang',
-                  value: '${totalRecommendedArea.toStringAsFixed(1)} m2',
-                  icon: Icons.meeting_room_rounded,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniInfo({
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: orange,
-            size: 17,
-          ),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: mutedText,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: navy,
-                    fontSize: 11.7,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getHouseTypeTitle(double area) {
-    if (area <= 45) {
-      return 'Kategori: Rumah Tipe Kecil';
-    }
-
-    if (area <= 90) {
-      return 'Kategori: Rumah Tipe Sedang';
-    }
-
-    if (area <= 140) {
-      return 'Kategori: Rumah Tipe Besar';
-    }
-
-    return 'Kategori: Rumah Tipe Sangat Besar';
-  }
-
-  String _getHouseTypeDescription(double area) {
-    if (area <= 45) {
-      return 'Berdasarkan luas lahan, rumah ini cocok menggunakan konsep kompak dan efisien. Pembagian ruang dibuat sederhana agar area utama tetap nyaman digunakan.';
-    }
-
-    if (area <= 90) {
-      return 'Berdasarkan luas lahan, rumah ini termasuk tipe sedang. Sistem menyarankan pembagian ruang yang seimbang antara area privat, area keluarga, dan area servis.';
-    }
-
-    if (area <= 140) {
-      return 'Berdasarkan luas lahan, rumah ini termasuk tipe besar. Denah dapat memuat ruang yang lebih lengkap dengan sirkulasi yang lebih leluasa dan pembagian fungsi ruang yang jelas.';
-    }
-
-    return 'Berdasarkan luas lahan, rumah ini termasuk tipe sangat besar. Sistem menyarankan pembagian ruang yang lebih lengkap, termasuk area keluarga, ruang tamu, kamar tambahan, area servis, dan ruang luar.';
-  }
-
-  String _getRecommendedRoomSummary() {
-    if (controller.rekomendasiRuang.isEmpty) {
-      return 'Belum ada daftar ruangan yang direkomendasikan.';
-    }
-
-    final List<String> roomNames = controller.rekomendasiRuang
-        .map((room) => room.name)
-        .take(6)
-        .toList();
-
-    final String joinedRooms = roomNames.join(', ');
-
-    if (controller.rekomendasiRuang.length > 6) {
-      return 'Ruangan yang cocok untuk luas tersebut antara lain $joinedRooms, dan beberapa ruang pendukung lainnya.';
-    }
-
-    return 'Ruangan yang cocok untuk luas tersebut antara lain $joinedRooms.';
-  }
-
-  IconData _recommendationIcon(String category) {
-    switch (category) {
-      case 'bedroom':
-        return Icons.bed_rounded;
-      case 'bath':
-        return Icons.bathtub_rounded;
-      case 'kitchen':
-        return Icons.kitchen_rounded;
-      case 'dining':
-        return Icons.dining_rounded;
-      case 'living':
-        return Icons.chair_rounded;
-      case 'family':
-        return Icons.weekend_rounded;
-      case 'outdoor':
-        return Icons.yard_rounded;
-      case 'service':
-        return Icons.cleaning_services_rounded;
-      default:
-        return Icons.meeting_room_rounded;
-    }
-  }
-
   Widget _buildGenerateButton() {
     return SizedBox(
       width: double.infinity,
@@ -1311,5 +879,3 @@ Obx(
     );
   }
 }
-
-
