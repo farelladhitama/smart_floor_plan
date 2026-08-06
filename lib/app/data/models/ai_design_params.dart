@@ -11,6 +11,10 @@ class AIDesignParams {
   final String? orientation;
   final String? roofType;
 
+  // ⭐ BARU: Ukuran lahan yang dihitung AI dari kebutuhan user
+  final double lebarLahan;
+  final double panjangLahan;
+
   AIDesignParams({
     required this.style,
     required this.familySize,
@@ -23,6 +27,8 @@ class AIDesignParams {
     this.budget,
     this.orientation,
     this.roofType,
+    this.lebarLahan = 0.0,
+    this.panjangLahan = 0.0,
   });
 
   factory AIDesignParams.fromJson(Map<String, dynamic> json) {
@@ -38,6 +44,8 @@ class AIDesignParams {
       budget: json['budget']?.toDouble(),
       orientation: json['orientation'],
       roofType: json['roof_type'],
+      lebarLahan: (json['lebar_lahan'] ?? 0.0).toDouble(),
+      panjangLahan: (json['panjang_lahan'] ?? 0.0).toDouble(),
     );
   }
 
@@ -54,10 +62,11 @@ class AIDesignParams {
       'budget': budget,
       'orientation': orientation,
       'roof_type': roofType,
+      'lebar_lahan': lebarLahan,
+      'panjang_lahan': panjangLahan,
     };
   }
 
-  // ⭐ TAMBAHKAN METHOD copyWith
   AIDesignParams copyWith({
     String? style,
     int? familySize,
@@ -70,6 +79,8 @@ class AIDesignParams {
     double? budget,
     String? orientation,
     String? roofType,
+    double? lebarLahan,
+    double? panjangLahan,
   }) {
     return AIDesignParams(
       style: style ?? this.style,
@@ -83,6 +94,8 @@ class AIDesignParams {
       budget: budget ?? this.budget,
       orientation: orientation ?? this.orientation,
       roofType: roofType ?? this.roofType,
+      lebarLahan: lebarLahan ?? this.lebarLahan,
+      panjangLahan: panjangLahan ?? this.panjangLahan,
     );
   }
 }

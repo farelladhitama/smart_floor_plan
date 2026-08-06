@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app/core/supabase/supabase_config.dart';
 import 'app/core/theme/app_colors.dart';
@@ -9,10 +10,12 @@ import 'app/routes/app_pages.dart';
 import 'firebase_options.dart';
 import 'app/services/material_item_service.dart';
 import 'app/modules/analysis/controllers/analysis_controller.dart';
-// import 'app/services/ai_design_service.dart'; // TIDAK PERLU
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🔑 Muat .env untuk API keys
+  await dotenv.load(fileName: '.env');
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -22,9 +25,6 @@ Future<void> main() async {
     url: SupabaseConfig.url,
     anonKey: SupabaseConfig.publishableKey,
   );
-
-  // 🔑 TIDAK PERLU SET API KEY - PAKAI SIMULASI
-  // AIDesignService.setApiKey('...');
 
   runApp(const SmartFloorPlanApp());
 }

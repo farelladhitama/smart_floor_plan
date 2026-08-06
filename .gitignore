@@ -1,4 +1,7 @@
 # Miscellaneous
+# API Keys - JANGAN di-commit!
+.env
+
 *.class
 *.log
 *.pyc

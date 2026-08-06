@@ -1,4 +1,4 @@
-﻿import 'package:smart_floor_plan/app/data/models/room_model.dart';
+import 'package:smart_floor_plan/app/data/models/room_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -128,20 +128,23 @@ class GenerateFormController extends GetxController {
   }
 
   void _applyAIParams(AIDesignParams params) {
+    // ⭐ FIX: Selalu timpa extra rooms dari AI
     final extraRooms = params.extraRooms;
     if (extraRooms.isNotEmpty) {
       tambahanRuanganController.text = extraRooms.join(', ');
     }
 
-    final baseWidth = 6.0 + (params.bedroom * 1.5) + (params.bathroom * 1.0) + (params.garage * 1.5);
-    final baseLength = 8.0 + (params.extraRooms.length * 1.5);
-    
-    if (lebarController.text.isEmpty) {
-      lebarController.text = baseWidth.toStringAsFixed(1);
+    // ⭐ FIX: Selalu timpa ukuran lahan dari hasil kalkulasi AI
+    // Tidak lagi bergantung pada "if isEmpty" — AI selalu menentukan ukuran
+    if (params.lebarLahan > 0) {
+      lebarController.text = params.lebarLahan.toStringAsFixed(1);
     }
-    if (panjangController.text.isEmpty) {
-      panjangController.text = baseLength.toStringAsFixed(1);
+    if (params.panjangLahan > 0) {
+      panjangController.text = params.panjangLahan.toStringAsFixed(1);
     }
+
+    print('📐 [Form] Ukuran dari AI: ${params.lebarLahan}m × ${params.panjangLahan}m');
+    print('🛏️  [Form] Kamar tidur: ${params.bedroom}, KM/WC: ${params.bathroom}');
   }
 
   void resetAI() {
@@ -672,10 +675,16 @@ class GenerateFormController extends GetxController {
     final double lebarRumah = double.parse(lebarController.text.trim());
     final double panjangRumah = double.parse(panjangController.text.trim());
 
-    final int bedroomCount = estimateBedroomCount(
-      landWidth: lebarRumah,
-      landLength: panjangRumah,
-    );
+    // ⭐ FIX: Gunakan aiParams.bedroom langsung saat mode AI aktif
+    // (sebelumnya selalu dihitung ulang dari luas lahan saja)
+    final int bedroomCount = (useAIAnalysis.value && aiParams.value != null)
+        ? aiParams.value!.bedroom.clamp(1, 8)
+        : estimateBedroomCount(
+            landWidth: lebarRumah,
+            landLength: panjangRumah,
+          );
+
+    print('🏠 [Generate] Mode AI: ${useAIAnalysis.value}, Kamar: $bedroomCount');
 
     final List<RoomRecommendation> extraRooms = _buildExtraRoomRecommendations(
       landWidth: lebarRumah,

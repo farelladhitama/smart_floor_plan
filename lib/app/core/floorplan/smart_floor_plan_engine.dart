@@ -190,27 +190,32 @@ class SmartFloorPlanEngine {
   ) {
     final rooms = <RoomModel>[];
 
-    final double zFront = L * _pick(v, [0.32, 0.30, 0.28, 0.34]);
-    final double zMid = L * _pick(v, [0.38, 0.40, 0.42, 0.36]);
+    final double zFront = L * _pick(v, [0.28, 0.26, 0.30, 0.28]);
+    final double zMid = L * _pick(v, [0.40, 0.42, 0.38, 0.40]);
     final double zBack = L - zFront - zMid;
 
     final double yBack = 0;
     final double yMid = zBack;
     final double yFront = zBack + zMid;
 
+    // Front: Teras + Ruang Tamu
     final double terW = W * _pick(v, [0.40, 0.45, 0.35, 0.50]);
     _add(rooms, nama: 'Teras', cat: 'outdoor', x: 0, y: yFront, w: terW, h: zFront);
     _add(rooms, nama: 'Ruang Tamu', cat: 'living', x: terW, y: yFront, w: W - terW, h: zFront);
 
-    final double bathW = W * _pick(v, [0.35, 0.30, 0.38, 0.32]);
-    _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: 0, y: yMid, w: W - bathW, h: zMid);
+    // Mid: R. Keluarga + K. Tidur Utama + KM/WC
+    final double famW = W * _pick(v, [0.45, 0.50, 0.42, 0.48]);
+    final double bathW = _clamp(W * 0.25, 1.2, 2.0);
+    _add(rooms, nama: 'R. Keluarga', cat: 'family', x: 0, y: yMid, w: famW, h: zMid);
+    _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: famW, y: yMid, w: W - famW - bathW, h: zMid);
     _add(rooms, nama: 'KM/WC', cat: 'bath', x: W - bathW, y: yMid, w: bathW, h: zMid);
 
-    final double kitW = W * _pick(v, [0.55, 0.60, 0.50, 0.58]);
+    // Back: Dapur + Area Cuci
+    final double kitW = W * _pick(v, [0.60, 0.55, 0.65, 0.58]);
     _add(rooms, nama: 'Dapur', cat: 'kitchen', x: 0, y: yBack, w: kitW, h: zBack);
     _add(rooms, nama: 'Area Cuci', cat: 'service', x: kitW, y: yBack, w: W - kitW, h: zBack);
 
-    _placeExtra(rooms, extra, W, L, 0, yMid, W);
+    _placeExtra(rooms, extra, W, L, 0, yBack, W);
     return rooms;
   }
 
@@ -223,21 +228,22 @@ class SmartFloorPlanEngine {
     final double cLeft = W * _pick(v, [0.48, 0.45, 0.52, 0.50]);
     final double cRight = W - cLeft;
 
+    // Left column: KT Utama (top) + KM/WC (bottom)
     final double bedH = L * _pick(v, [0.60, 0.55, 0.65, 0.58]);
     final double bathH = L - bedH;
-
     _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: 0, y: L - bedH, w: cLeft, h: bedH);
     _add(rooms, nama: 'KM/WC', cat: 'bath', x: 0, y: 0, w: cLeft, h: bathH);
 
-    final double livH = L * _pick(v, [0.42, 0.45, 0.38, 0.40]);
-    final double kitH = L * _pick(v, [0.34, 0.30, 0.36, 0.32]);
-    final double svcH = L - livH - kitH;
+    // Right column: Ruang Tamu (top) + R. Keluarga (mid) + Dapur (bottom)
+    final double livH = L * _pick(v, [0.30, 0.32, 0.28, 0.30]);
+    final double famH = L * _pick(v, [0.38, 0.36, 0.40, 0.38]);
+    final double kitH = L - livH - famH;
 
     _add(rooms, nama: 'Ruang Tamu', cat: 'living', x: cLeft, y: L - livH, w: cRight, h: livH);
-    _add(rooms, nama: 'Dapur', cat: 'kitchen', x: cLeft, y: svcH, w: cRight, h: kitH);
-    _add(rooms, nama: 'Area Cuci', cat: 'service', x: cLeft, y: 0, w: cRight, h: svcH);
+    _add(rooms, nama: 'R. Keluarga', cat: 'family', x: cLeft, y: kitH, w: cRight, h: famH);
+    _add(rooms, nama: 'Dapur', cat: 'kitchen', x: cLeft, y: 0, w: cRight, h: kitH);
 
-    _placeExtra(rooms, extra, W, L, cLeft, L * 0.4, cRight);
+    _placeExtra(rooms, extra, W, L, cLeft, kitH, cRight);
     return rooms;
   }
 
@@ -424,14 +430,18 @@ class SmartFloorPlanEngine {
     final double bH = L - taman - backYd;
     final double bY = backYd;
 
-    final double zF = bH * _pick(v, [0.26, 0.24, 0.28, 0.26]);
-    final double zM = bH * _pick(v, [0.38, 0.42, 0.36, 0.40]);
-    final double zB = bH - zF - zM;
+    // 4 zones: Front, Public, Bedroom, Service
+    final double zF = bH * _pick(v, [0.22, 0.20, 0.24, 0.22]);
+    final double zS = bH * _pick(v, [0.18, 0.20, 0.16, 0.18]);
+    final double zP = bH * _pick(v, [0.30, 0.28, 0.32, 0.30]);
+    final double zB = bH - zF - zS - zP;
 
-    final double yB = bY;
-    final double yM = bY + zB;
-    final double yF = bY + zB + zM;
+    final double yS = bY;
+    final double yB = bY + zS;
+    final double yP = bY + zS + zB;
+    final double yF = bY + zS + zB + zP;
 
+    // Front: Carport + Teras + Ruang Tamu
     final double cpW = _clamp(bW * 0.30, 2.6, 3.6);
     final bool cpR = (v == 1 || v == 3);
     final double cpX = cpR ? bX + bW - cpW : bX;
@@ -443,17 +453,27 @@ class SmartFloorPlanEngine {
     _add(rooms, nama: 'Ruang Tamu', cat: 'living', x: pubX + pubW * 0.36, y: yF, w: pubW * 0.64, h: zF);
     _add(rooms, nama: 'Taman Depan', cat: 'outdoor', x: bX, y: yF + zF, w: bW, h: taman);
 
-    final double famW = bW * _pick(v, [0.68, 0.72, 0.65, 0.70]);
-    final double garW = bW - famW;
-    final bool garR = (v == 0 || v == 2);
+    // Public: R. Keluarga + R. Makan
+    final double famW = bW * _pick(v, [0.62, 0.58, 0.65, 0.60]);
+    _add(rooms, nama: 'R. Keluarga', cat: 'family', x: bX, y: yP, w: famW, h: zP);
+    _add(rooms, nama: 'R. Makan', cat: 'dining', x: bX + famW, y: yP, w: bW - famW, h: zP);
 
-    _add(rooms, nama: 'R. Keluarga', cat: 'family', x: garR ? bX + garW : bX, y: yM, w: famW, h: zM);
-    _add(rooms, nama: 'Taman Samping', cat: 'outdoor', x: garR ? bX : bX + famW, y: yM + zM * 0.12, w: garW, h: zM * 0.88);
-
+    // Bedroom zone
     _buildBedroomZone(rooms, bX, yB, bW, zB, beds, v);
+
+    // Service: Dapur + KM/WC + Area Cuci (SELALU ADA)
+    final double kitW = _clamp(bW * 0.36, 2.4, 4.0);
+    final double bathW = _clamp(bW * 0.22, 1.4, 2.2);
+    final double svcW = bW - kitW - bathW;
+    _add(rooms, nama: 'Dapur', cat: 'kitchen', x: bX, y: yS, w: kitW, h: zS);
+    _add(rooms, nama: 'KM/WC', cat: 'bath', x: bX + kitW, y: yS, w: bathW, h: zS);
+    if (svcW >= _minRoom) {
+      _add(rooms, nama: 'Area Cuci', cat: 'service', x: bX + kitW + bathW, y: yS, w: svcW, h: zS);
+    }
+
     _add(rooms, nama: 'Taman Belakang', cat: 'outdoor', x: bX, y: 0, w: bW, h: backYd);
 
-    _placeExtra(rooms, extra, W, L, bX + bW * 0.55, yM, bW * 0.40);
+    _placeExtra(rooms, extra, W, L, bX + famW, yP, bW - famW);
     return rooms;
   }
 
@@ -559,56 +579,80 @@ class SmartFloorPlanEngine {
     final double bH = L - taman - backYd;
     final double bY = backYd;
 
-    final double zF = bH * _pick(v, [0.22, 0.20, 0.24, 0.22]);
-    final double zP = bH * _pick(v, [0.36, 0.40, 0.34, 0.38]);
-    final double zV = bH - zF - zP;
+    // ⭐ FIX: 4 zona — Front, Public, Bedroom, Service
+    // Zona service SELALU ada, tidak peduli jumlah kamar
+    final double zF = bH * _pick(v, [0.20, 0.18, 0.22, 0.20]);
+    final double zS = bH * _pick(v, [0.18, 0.20, 0.16, 0.18]);
+    final double zP = bH * _pick(v, [0.30, 0.28, 0.32, 0.30]);
+    final double zB = bH - zF - zS - zP;
 
-    final double yV = bY;
-    final double yP = bY + zV;
-    final double yF = bY + zV + zP;
+    final double yS = bY;                    // Service (belakang)
+    final double yB = bY + zS;               // Bedroom
+    final double yP = bY + zS + zB;          // Public
+    final double yF = bY + zS + zB + zP;     // Front (depan)
 
+    // Pembagian kolom
     final double lR = _pick(v, [0.34, 0.36, 0.30, 0.38]);
     final double cR = _pick(v, [0.32, 0.30, 0.36, 0.28]);
     final double lW = bW * lR;
     final double cW = bW * cR;
     final double rW = bW - lW - cW;
 
+    // ── ZONA DEPAN (Front) ──────────────────────────────────────────────────
     _add(rooms, nama: 'Carport', cat: 'outdoor', x: bX, y: yF, w: lW, h: zF);
     _add(rooms, nama: 'Teras', cat: 'outdoor', x: bX + lW, y: yF + zF * 0.50, w: cW, h: zF * 0.50);
     _add(rooms, nama: 'Ruang Tamu', cat: 'living', x: bX + lW + cW, y: yF, w: rW, h: zF);
     _add(rooms, nama: 'Taman Depan', cat: 'outdoor', x: bX, y: yF + zF, w: bW, h: taman);
 
-    final double famStartX = v == 1 ? bX : bX + lW;
-    final double famW2 = v == 1 ? bW : cW + rW;
-    _add(rooms, nama: 'R. Keluarga', cat: 'family', x: famStartX, y: yP, w: famW2, h: zP);
-    if (v != 1) {
-      _add(rooms, nama: 'Inner Court', cat: 'outdoor',
-          x: bX, y: yP + zP * 0.18, w: lW, h: zP * 0.82);
+    // ── ZONA PUBLIK (Public) ────────────────────────────────────────────────
+    final double famW2 = bW * _pick(v, [0.60, 0.55, 0.65, 0.58]);
+    final double dinW = bW - famW2;
+    _add(rooms, nama: 'R. Keluarga', cat: 'family', x: bX, y: yP, w: famW2, h: zP);
+    _add(rooms, nama: 'R. Makan', cat: 'dining', x: bX + famW2, y: yP, w: dinW, h: zP);
+
+    // ── ZONA KAMAR (Bedroom) ────────────────────────────────────────────────
+    final double spH = zB / 2;
+    _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: bX, y: yB, w: lW, h: spH);
+    _add(rooms, nama: 'KM Utama', cat: 'bath', x: bX, y: yB + spH, w: lW, h: spH);
+    _add(rooms, nama: 'K. Tidur 1', cat: 'bedroom', x: bX + lW, y: yB, w: cW, h: spH);
+    _add(rooms, nama: 'K. Tidur 2', cat: 'bedroom', x: bX + lW, y: yB + spH, w: cW, h: spH);
+
+    if (beds >= 4) {
+      // KT3 di kolom kanan atas
+      _add(rooms, nama: 'K. Tidur 3', cat: 'bedroom', x: bX + lW + cW, y: yB, w: rW, h: spH);
+      // KM/WC di kolom kanan bawah
+      _add(rooms, nama: 'KM/WC', cat: 'bath', x: bX + lW + cW, y: yB + spH, w: rW, h: spH);
+    } else {
+      _add(rooms, nama: 'KM/WC', cat: 'bath', x: bX + lW + cW, y: yB, w: rW, h: spH);
+      _add(rooms, nama: 'Area Cuci', cat: 'service', x: bX + lW + cW, y: yB + spH, w: rW, h: spH);
     }
 
-    if (v == 3) {
-      final double dinH = zP * 0.48;
-      _add(rooms, nama: 'R. Makan', cat: 'dining', x: bX + lW + cW, y: yP, w: rW, h: dinH);
+    if (beds >= 5) {
+      // KT4 diambil dari area Inner Court
+      final double kt4W = _clamp(lW, 2.4, 3.6);
+      _add(rooms, nama: 'K. Tidur 4', cat: 'bedroom', x: bX, y: yP, w: kt4W, h: zP * 0.55);
     }
 
-    final double spH = zV / 2;
-    _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: bX, y: yV, w: lW, h: spH);
-    _add(rooms, nama: 'KM Utama', cat: 'bath', x: bX, y: yV + spH, w: lW, h: spH);
-    _add(rooms, nama: 'K. Tidur 1', cat: 'bedroom', x: bX + lW, y: yV, w: cW, h: spH);
-    _add(rooms, nama: 'K. Tidur 2', cat: 'bedroom', x: bX + lW, y: yV + spH, w: cW, h: spH);
-    if (beds >= 4)
-      _add(rooms, nama: 'K. Tidur 3', cat: 'bedroom', x: bX + lW + cW, y: yV, w: rW, h: spH);
+    // ── ZONA SERVICE (Dapur & servis) — SELALU ADA ──────────────────────────
+    final double kitW = _clamp(bW * 0.32, 3.0, 4.6);
+    final double dapurDinW = _clamp(bW * 0.28, 2.6, 4.0);
+    final double bathW = _clamp(bW * 0.18, 1.5, 2.4);
+    final double svcW = bW - kitW - dapurDinW - bathW;
 
-    if (beds < 4) {
-      _add(rooms, nama: 'Dapur', cat: 'kitchen', x: bX + lW + cW, y: yV, w: rW * 0.55, h: spH);
-      _add(rooms, nama: 'KM/WC', cat: 'bath', x: bX + lW + cW + rW * 0.55, y: yV, w: rW * 0.45, h: spH);
+    _add(rooms, nama: 'Dapur', cat: 'kitchen', x: bX, y: yS, w: kitW, h: zS);
+    _add(rooms, nama: 'Area Cuci', cat: 'service', x: bX + kitW, y: yS, w: dapurDinW, h: zS);
+    if (beds >= 4) {
+      _add(rooms, nama: 'KM/WC 2', cat: 'bath', x: bX + kitW + dapurDinW, y: yS, w: bathW, h: zS);
     }
-    if (beds < 4)
-      _add(rooms, nama: 'Area Cuci', cat: 'service', x: bX + lW + cW, y: yV + spH, w: rW, h: spH);
+    if (svcW >= _minRoom) {
+      _add(rooms, nama: 'Gudang', cat: 'service', x: bX + kitW + dapurDinW + bathW, y: yS, w: svcW, h: zS);
+    }
 
+    // ── TAMAN BELAKANG ──────────────────────────────────────────────────────
     _add(rooms, nama: 'Taman Belakang', cat: 'outdoor', x: bX, y: 0, w: bW, h: backYd);
 
-    _placeExtra(rooms, extra, W, L, bX + lW, yP, cW + rW);
+    // Extra rooms ditempatkan di area publik (samping R.Keluarga)
+    _placeExtra(rooms, extra, W, L, bX + famW2, yP + zP * 0.55, dinW);
     return rooms;
   }
 
@@ -622,20 +666,15 @@ class SmartFloorPlanEngine {
     int beds, int v,
   ) {
     if (beds <= 1) {
-      final double bathW = _clamp(bW * 0.28, 1.3, 2.0);
-      final double kitH = zH * 0.40;
+      final double bathW = _clamp(bW * 0.30, 1.4, 2.2);
       _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: bX, y: yZone, w: bW - bathW, h: zH);
-      _add(rooms, nama: 'KM/WC', cat: 'bath', x: bX + bW - bathW, y: yZone + kitH, w: bathW, h: zH - kitH);
-      _add(rooms, nama: 'Dapur', cat: 'kitchen', x: bX + bW - bathW, y: yZone, w: bathW, h: kitH);
+      _add(rooms, nama: 'KM Utama', cat: 'bath', x: bX + bW - bathW, y: yZone, w: bathW, h: zH);
     } else if (beds == 2) {
       final double lW = _clamp(bW * 0.50, 2.6, bW - 2.4);
-      final double bathW = _clamp(bW * 0.26, 1.3, 2.0);
-      final double kitH = zH * 0.45;
+      final double rW = bW - lW;
       _add(rooms, nama: 'K. Tidur Utama', cat: 'bedroom', x: bX, y: yZone, w: lW, h: zH);
-      _add(rooms, nama: 'K. Tidur 1', cat: 'bedroom', x: bX + lW, y: yZone, w: bW - lW - bathW, h: zH * 0.55);
-      _add(rooms, nama: 'KM/WC', cat: 'bath', x: bX + bW - bathW, y: yZone + kitH, w: bathW, h: zH - kitH);
-      _add(rooms, nama: 'Dapur', cat: 'kitchen', x: bX + bW - bathW, y: yZone, w: bathW, h: kitH);
-      _add(rooms, nama: 'Area Cuci', cat: 'service', x: bX + lW, y: yZone + zH * 0.55, w: bW - lW - bathW, h: zH * 0.45);
+      _add(rooms, nama: 'K. Tidur 1', cat: 'bedroom', x: bX + lW, y: yZone, w: rW, h: zH * 0.55);
+      _add(rooms, nama: 'KM Utama', cat: 'bath', x: bX + lW, y: yZone + zH * 0.55, w: rW, h: zH * 0.45);
     } else {
       final double mW = _clamp(bW * 0.38, 2.8, 4.2);
       final double corW = _clamp(bW * 0.10, 0.9, 1.4);
@@ -654,6 +693,10 @@ class SmartFloorPlanEngine {
   //  FUNGSI BANTU (HELPERS)
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  PENEMPATAN RUANG TAMBAHAN — POSISI LOGIS BERDASARKAN TIPE RUANG
+  // ═══════════════════════════════════════════════════════════════════════════
+
   static void _placeExtra(
     List<RoomModel> rooms,
     List<RoomRecommendation> extra,
@@ -662,15 +705,96 @@ class SmartFloorPlanEngine {
   ) {
     final selected = extra.where((r) => r.selected).toList();
     if (selected.isEmpty) return;
-    double curY = baseY;
+
+    // Pisahkan ruang tambahan berdasarkan tipe penempatan
+    final frontRooms = <RoomRecommendation>[];  // garasi → depan
+    final backRooms  = <RoomRecommendation>[];  // kolam renang, taman belakang → belakang
+    final midRooms   = <RoomRecommendation>[];  // ruang lain → tengah
+
     for (final e in selected) {
-      final rW = _clamp(e.width, 1.5, maxW);
-      final rH = _clamp(e.height, 1.3, L * 0.18);
-      if (baseX + rW > W || curY + rH > L) break;
-      _add(rooms, nama: e.name, cat: e.category, x: baseX, y: curY, w: rW, h: rH);
-      curY += rH + _wallGap;
+      final n = e.name.toLowerCase();
+      if (n.contains('garasi') || n.contains('carport')) {
+        frontRooms.add(e);
+      } else if (n.contains('kolam') || n.contains('pool') ||
+                 n.contains('taman belakang')) {
+        backRooms.add(e);
+      } else {
+        midRooms.add(e);
+      }
+    }
+
+    // ── 1. Garasi di area depan (y tertinggi = bagian depan bangunan) ────────
+    if (frontRooms.isNotEmpty) {
+      // Cari y maksimum dari rooms yang ada (area depan)
+      double frontY = 0;
+      for (final r in rooms) {
+        if (frontY < r.y + r.height) frontY = r.y + r.height;
+      }
+      frontY = frontY.clamp(L * 0.70, L - 1.0);
+
+      double curX = 0;
+      for (final e in frontRooms) {
+        final rW = _clamp(e.width, 2.4, W * 0.40);
+        final rH = _clamp(e.height, 3.0, L - frontY);
+        if (curX + rW > W) break;
+        if (rH < _minRoom) break;
+        // Verifikasi tidak overlap dengan room yang sudah ada di area itu
+        bool overlaps = rooms.any((r) =>
+          r.x < curX + rW && r.x + r.width > curX &&
+          r.y < frontY + rH && r.y + r.height > frontY
+        );
+        if (!overlaps) {
+          _add(rooms, nama: e.name, cat: e.category, x: curX, y: frontY, w: rW, h: rH);
+        }
+        curX += rW;
+      }
+    }
+
+    // ── 2. Kolam renang & taman di belakang (y=0 = bagian belakang) ─────────
+    if (backRooms.isNotEmpty) {
+      // Cari area bawah yang kosong
+      double backMaxH = 0;
+      for (final r in rooms) {
+        if (r.y < L * 0.25) backMaxH = backMaxH < r.y + r.height ? r.y + r.height : backMaxH;
+      }
+      final backH = (L * 0.25 - backMaxH).clamp(2.0, L * 0.30);
+      if (backH >= _minRoom) {
+        double curX = 0;
+        for (final e in backRooms) {
+          final rW = _clamp(e.width, 2.5, W * 0.60);
+          final rH = _clamp(e.height, 2.0, backH);
+          if (curX + rW > W || rH < _minRoom) break;
+          bool overlaps = rooms.any((r) =>
+            r.x < curX + rW && r.x + r.width > curX &&
+            r.y < backMaxH + rH && r.y + r.height > backMaxH
+          );
+          if (!overlaps) {
+            _add(rooms, nama: e.name, cat: e.category, x: curX, y: backMaxH, w: rW, h: rH);
+          }
+          curX += rW;
+        }
+      }
+    }
+
+    // ── 3. Ruang lainnya di zona tengah (baseX/baseY dari caller) ───────────
+    if (midRooms.isNotEmpty) {
+      double curY = baseY;
+      for (final e in midRooms) {
+        final rW = _clamp(e.width, 1.5, maxW);
+        final rH = _clamp(e.height, 1.3, L * 0.25);
+        if (baseX + rW > W || curY + rH > L) break;
+        bool overlaps = rooms.any((r) =>
+          r.x < baseX + rW && r.x + r.width > baseX &&
+          r.y < curY + rH && r.y + r.height > curY
+        );
+        if (!overlaps) {
+          _add(rooms, nama: e.name, cat: e.category, x: baseX, y: curY, w: rW, h: rH);
+          curY += rH + _wallGap;
+        }
+      }
     }
   }
+
 
   static void _add(
     List<RoomModel> rooms, {
