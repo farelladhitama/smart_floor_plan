@@ -10,6 +10,7 @@ import 'package:smart_floor_plan/app/modules/rab/views/rab_page.dart';
 import 'package:smart_floor_plan/app/modules/riwayat/controllers/riwayat_controller.dart';
 import 'package:smart_floor_plan/app/services/material_price_service.dart';
 import 'package:smart_floor_plan/app/services/activity_log_service.dart';
+import 'package:smart_floor_plan/app/services/ai_rab_analyzer.dart';
 
 class HasilDenahController extends GetxController {
   static const Color navy = Color(0xFF0D1B2A);
@@ -27,6 +28,10 @@ class HasilDenahController extends GetxController {
   String material = 'Batu Bata';
   Map<String, String> selectedMaterials = <String, String>{};
   List<String> ruangTambahan = <String>[];
+
+  // ============= AI RAB ANALYSIS =============
+  final RxBool isLoadingRABAnalysis = false.obs;
+  final RxString rabAnalysisResult = ''.obs;
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
@@ -85,13 +90,13 @@ class HasilDenahController extends GetxController {
 
   double _cachedEstimasiRab = 0;
 
-double get estimasiRab {
-  if (_cachedEstimasiRab > 0) {
-    return _cachedEstimasiRab;
-  }
+  double get estimasiRab {
+    if (_cachedEstimasiRab > 0) {
+      return _cachedEstimasiRab;
+    }
 
-  return totalLandArea * 3500000;
-}
+    return totalLandArea * 3500000;
+  }
 
   int get indoorRoomCount {
     return currentRooms.where((room) => !room.isOutdoor).length;
@@ -140,26 +145,25 @@ double get estimasiRab {
   }
 
   Map<String, dynamic> _buildRabArguments() {
-  final double luas = totalLandArea;
-  final Map<String, String> selected = _effectiveSelectedMaterials();
+    final double luas = totalLandArea;
+    final Map<String, String> selected = _effectiveSelectedMaterials();
 
-  return {
-    'luasBangunan': luas,
-    'totalLuas': luas,
-    'total_luas': luas,
-    'estimasi_rab': estimasiRab,
-    'inputLuas': luas,
-    'inputLebarRumah': landWidth,
-    'inputPanjangRumah': landLength,
-    'lebar_lahan': landWidth,
-    'panjang_lahan': landLength,
-    'material': selected['Material Dinding'] ?? material,
-    'selectedMaterials': selected,
-    'jenisTukang':
-    Get.arguments?['jenisTukang'] ?? 'Tukang Harian',
-  };
-}
-
+    return {
+      'luasBangunan': luas,
+      'totalLuas': luas,
+      'total_luas': luas,
+      'estimasi_rab': estimasiRab,
+      'inputLuas': luas,
+      'inputLebarRumah': landWidth,
+      'inputPanjangRumah': landLength,
+      'lebar_lahan': landWidth,
+      'panjang_lahan': landLength,
+      'material': selected['Material Dinding'] ?? material,
+      'selectedMaterials': selected,
+      'jenisTukang':
+      Get.arguments?['jenisTukang'] ?? 'Tukang Harian',
+    };
+  }
 
   bool _isScanModeFromArguments() {
     final dynamic args = Get.arguments;
@@ -532,6 +536,128 @@ double get estimasiRab {
     }
   }
 
+  // ============= ANALISIS RAB WITH LLM =============
+Future<void> analisisRABWithLLM() async {
+  if (isLoadingRABAnalysis.value) return;
+  
+  // ⭐ AMBIL TOTAL KESELURUHAN DARI RAB CONTROLLER
+  double total = 0;
+  String jenisTukang = 'Tukang Harian';
+  
+  // 1. Coba dari RabController (halaman RAB sudah dihitung)
+  if (Get.isRegistered<RabController>()) {
+    final rabController = Get.find<RabController>();
+    // ⭐ PAKAI totalKeseluruhan (material + tukang)
+    total = rabController.totalKeseluruhan;
+    jenisTukang = rabController.selectedTukang.value;
+    print('💰 [RAB] Dari RabController.totalKeseluruhan: $total');
+    print('💰 [RAB] Jenis Tukang: $jenisTukang');
+  }
+  
+  // 2. Coba dari Get.arguments
+  if (total == 0) {
+    final args = Get.arguments;
+    if (args is Map) {
+      total = _toDouble(args['estimasi_rab'], fallback: 0);
+      if (total == 0) {
+        total = _toDouble(args['totalBiaya'], fallback: 0);
+      }
+      jenisTukang = args['jenisTukang']?.toString() ?? 'Tukang Harian';
+      print('💰 [RAB] Dari Get.arguments: $total');
+    }
+  }
+  
+  // 3. Coba dari estimasiRab
+  if (total == 0) {
+    total = estimasiRab;
+    print('💰 [RAB] Dari estimasiRab: $total');
+  }
+  
+  // ⭐ FALLBACK
+  if (total == 0) {
+    total = 97989000; // fallback dari RAB page
+    print('💰 [RAB] Pakai fallback: $total');
+  }
+  
+  print('💰 [RAB] Total biaya FINAL: $total');
+  
+  final String materialDinding = selectedMaterials['Material Dinding'] ?? material;
+  
+  // ⭐ AMBIL RINCIAN DARI RAB CONTROLLER KALAU ADA
+  Map<String, dynamic> rincian = {};
+  
+  if (Get.isRegistered<RabController>()) {
+    final rabController = Get.find<RabController>();
+    // Hitung rincian dari total yang sebenarnya
+    final double totalRab = rabController.totalRab;
+    final double biayaTukang = rabController.biayaTukang;
+    
+    rincian = {
+      'material': totalRab.round(),
+      'tenaga_kerja': biayaTukang.round(),
+      'perizinan': (totalRab * 0.05).round(),
+      'biaya_tambahan': (totalRab * 0.05).round(),
+    };
+    print('💰 [RAB] Rincian dari RabController: $rincian');
+  } else {
+    // Fallback rincian
+    rincian = {
+      'material': (total * 0.7).round(),
+      'tenaga_kerja': (total * 0.2).round(),
+      'perizinan': (total * 0.05).round(),
+      'biaya_tambahan': (total * 0.05).round(),
+    };
+  }
+  
+  // Tentukan kategori
+  String kategori = 'Menengah';
+  if (total < 300000000) kategori = 'Ekonomis';
+  else if (total < 600000000) kategori = 'Menengah';
+  else if (total < 1000000000) kategori = 'Mewah';
+  else kategori = 'Premium';
+  
+  isLoadingRABAnalysis.value = true;
+  
+  try {
+    final result = await AIRabAnalyzer.analyze(
+      totalBiaya: total,
+      rincian: rincian,
+      kategori: kategori,
+      materialDinding: materialDinding,
+      jenisTukang: jenisTukang,
+      jumlahKamar: jumlahKamar,
+    );
+    
+    rabAnalysisResult.value = result;
+  } catch (e) {
+    Get.snackbar(
+      'Error',
+      'Gagal analisis RAB: ${e.toString()}',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.shade700,
+      colorText: Colors.white,
+    );
+  } finally {
+    isLoadingRABAnalysis.value = false;
+  }
+}
+
+  // ⭐ METHOD UNTUK KONVERSI KE DOUBLE
+  double _toDouble(dynamic value, {required double fallback}) {
+    if (value == null) return fallback;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final cleaned = value.replaceAll(RegExp(r'[^0-9.]'), '');
+      return double.tryParse(cleaned) ?? fallback;
+    }
+    return fallback;
+  }
+
+  void clearRABAnalysis() {
+    rabAnalysisResult.value = '';
+  }
+
+  // ============= SAVE METHODS =============
 
   Future<void> simpanDenah() async {
     if (_isScanModeFromArguments()) {
@@ -570,17 +696,14 @@ double get estimasiRab {
       final List<Map<String, dynamic>> roomsJson =
           currentRooms.map((room) => _roomToJson(room)).toList();
       final Map<String, String> selected = _effectiveSelectedMaterials();
-final double estimasiMaterialRab =
-    await _calculateEstimasiMaterialRab(
-      selectedMaterials: selected,
-      luasBangunan: totalLandArea,
-    );
+      
+      final double estimasiMaterialRab =
+          await _calculateEstimasiMaterialRab(
+            selectedMaterials: selected,
+            luasBangunan: totalLandArea,
+          );
 
-_cachedEstimasiRab = estimasiMaterialRab;
-
-print('==============');
-print('JENIS TUKANG = ${Get.arguments?['jenisTukang']}');
-print('=============='); 
+      _cachedEstimasiRab = estimasiMaterialRab;
 
       final Map<String, dynamic> payload = {
         'user_id': user.id,
@@ -617,17 +740,11 @@ print('==============');
           message: 'Perubahan denah berhasil diperbarui di riwayat.',
         );
       } else {
-        print("========== INSERT FLOOR PLAN ==========");
-print(payload);
-
-final Map<String, dynamic> inserted = await _supabase
-    .from('floor_plans')
-    .insert(payload)
-    .select('id')
-    .single();
-
-print("========== INSERT SUCCESS ==========");
-print(inserted);
+        final Map<String, dynamic> inserted = await _supabase
+            .from('floor_plans')
+            .insert(payload)
+            .select('id')
+            .single();
 
         floorPlanId = (inserted['id'] ?? '').toString();
 
@@ -636,22 +753,22 @@ print(inserted);
           message: 'Denah berhasil disimpan ke database Supabase.',
         );
       }
+      
       await ActivityLogService.addLog(
-  title: "Simpan Denah",
-  description:
-      "Denah ${landWidth.toStringAsFixed(1)} x ${landLength.toStringAsFixed(1)} berhasil disimpan",
-  icon: "save",
-);
+        title: "Simpan Denah",
+        description:
+            "Denah ${landWidth.toStringAsFixed(1)} x ${landLength.toStringAsFixed(1)} berhasil disimpan",
+        icon: "save",
+      );
 
       isSaved.value = true;
 
-     isSaved.value = true;
+      if (!Get.isRegistered<RiwayatController>()) {
+        Get.put(RiwayatController());
+      }
 
-if (!Get.isRegistered<RiwayatController>()) {
-  Get.put(RiwayatController());
-}
-
-await Get.find<RiwayatController>().loadHistories();
+      await Get.find<RiwayatController>().loadHistories();
+      
     } on PostgrestException catch (error) {
       _showSnackBar(
         title: 'Gagal Simpan Database',
@@ -903,6 +1020,7 @@ await Get.find<RiwayatController>().loadHistories();
       {'kategori': 'Pipa', 'nama_material': 'pipa conduit', 'harga_rab': 15000},
     ];
   }
+  
   String _getUserName(User user) {
     final Map<String, dynamic>? metadata = user.userMetadata;
 
@@ -921,6 +1039,7 @@ await Get.find<RiwayatController>().loadHistories();
 
     return 'User';
   }
+  
   Map<String, dynamic> _roomToJson(RoomModel room) {
     final dynamic dynamicRoom = room;
 
@@ -968,11 +1087,11 @@ await Get.find<RiwayatController>().loadHistories();
         result.map((room) => room.copyWith()).toList(),
       );
       await ActivityLogService.addLog(
-  title: "Edit Denah",
-  description:
-      "Denah ${landWidth.toStringAsFixed(1)} x ${landLength.toStringAsFixed(1)} berhasil diedit",
-  icon: "edit",
-);
+        title: "Edit Denah",
+        description:
+            "Denah ${landWidth.toStringAsFixed(1)} x ${landLength.toStringAsFixed(1)} berhasil diedit",
+        icon: "edit",
+      );
       isSaved.value = false;
       await simpanDenah();
     }
@@ -1031,5 +1150,3 @@ await Get.find<RiwayatController>().loadHistories();
     super.onClose();
   }
 }
-
-

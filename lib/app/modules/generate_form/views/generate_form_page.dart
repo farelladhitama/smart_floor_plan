@@ -275,7 +275,7 @@ class GenerateFormPage extends GetView<GenerateFormController> {
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
-              hintText: 'Contoh: Saya ingin rumah minimalis modern untuk keluarga 5 orang dengan 3 kamar tidur, 2 kamar mandi, ruang kerja, mushola, taman belakang, garasi 2 mobil...',
+              hintText: '',
               hintStyle: TextStyle(
                 color: Colors.white.withOpacity(0.35),
                 fontSize: 12,

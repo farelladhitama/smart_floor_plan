@@ -10,6 +10,7 @@ import 'package:smart_floor_plan/app/widgets/professional_floor_plan_painter.dar
 import 'package:smart_floor_plan/app/modules/riwayat/views/riwayat_page.dart';
 import 'package:smart_floor_plan/app/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:smart_floor_plan/app/modules/dashboard/views/dashboard_page.dart';
+import 'package:smart_floor_plan/app/modules/rab/controllers/rab_controller.dart'; // ⭐ TAMBAHKAN INI
 
 class HasilDenahPage extends StatefulWidget {
   final List<RoomModel> rooms;
@@ -20,24 +21,23 @@ class HasilDenahPage extends StatefulWidget {
   final dynamic jumlahKamar;
   final dynamic ruangTambahan;
   final dynamic totalLuas;
-final Map<String, String>? selectedMaterials;
-final String? jenisTukang;
+  final Map<String, String>? selectedMaterials;
+  final String? jenisTukang;
   
 
   const HasilDenahPage({
-  super.key,
-  this.rooms = const [],
-  this.inputLebarRumah,
-  this.inputPanjangRumah,
-  this.floorPlanId,
-  this.material,
-  this.jumlahKamar,
-  this.ruangTambahan,
-
-  this.totalLuas,
-  this.selectedMaterials,
-  this.jenisTukang,
-});
+    super.key,
+    this.rooms = const [],
+    this.inputLebarRumah,
+    this.inputPanjangRumah,
+    this.floorPlanId,
+    this.material,
+    this.jumlahKamar,
+    this.ruangTambahan,
+    this.totalLuas,
+    this.selectedMaterials,
+    this.jenisTukang,
+  });
 
   @override
   State<HasilDenahPage> createState() => _HasilDenahPageState();
@@ -55,12 +55,10 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     double lebar = 0;
     double panjang = 0;
     
-    // Coba dari widget
     if (widget.inputLebarRumah != null && widget.inputPanjangRumah != null) {
       lebar = _toDouble(widget.inputLebarRumah, fallback: 0);
       panjang = _toDouble(widget.inputPanjangRumah, fallback: 0);
     } else {
-      // Coba dari Get.arguments
       final args = Get.arguments;
       if (args is Map) {
         lebar = _toDouble(args['lebar_lahan'] ?? args['inputLebarRumah'] ?? 0, fallback: 0);
@@ -68,7 +66,6 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
       }
     }
     
-    // Jika tidak ada ukuran, jangan tampilkan
     if (lebar <= 0 || panjang <= 0) {
       return const SizedBox.shrink();
     }
@@ -97,6 +94,155 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
               fontWeight: FontWeight.bold,
               fontSize: 14,
               color: Color(0xFF0D1B2A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== AI RAB ANALYSIS SECTION ====================
+  Widget _buildRABAnalysisSection(HasilDenahController controller) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE3E9F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: orange, size: 22),
+              SizedBox(width: 10),
+              Text(
+                '🧠 Analisis AI untuk RAB',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Dapatkan insight dan saran dari AI berdasarkan hasil estimasi RAB Anda.',
+            style: TextStyle(
+              fontSize: 13,
+              color: textSoft,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Obx(
+            () {
+              if (controller.isLoadingRABAnalysis.value) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: CircularProgressIndicator(
+                            color: orange,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'AI sedang menganalisis RAB...',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textSoft,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              if (controller.rabAnalysisResult.value.isNotEmpty) {
+                return _buildRABResult(controller);
+              }
+              return _buildRABButton(controller);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRABButton(HasilDenahController controller) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton.icon(
+        onPressed: controller.analisisRABWithLLM,
+        icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+        label: const Text(
+          '✨ Analisis AI',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: navy,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRABResult(HasilDenahController controller) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8EDF3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: orange, size: 18),
+              const SizedBox(width: 8),
+              const Text(
+                'Hasil Analisis AI',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: textDark,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: controller.clearRABAnalysis,
+                icon: const Icon(Icons.close_rounded, size: 20),
+                color: textSoft,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            controller.rabAnalysisResult.value,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.6,
+              color: Colors.black87,
             ),
           ),
         ],
@@ -134,45 +280,49 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
               ),
             ),
           ),
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.only(bottom: 86),
-            child: FloatingActionButton.extended(
-              heroTag: 'rab_hasil_denah',
-              backgroundColor: const Color(0xFFE47B3E),
-              foregroundColor: Colors.white,
-              elevation: 8,
-              onPressed: () {
-  Get.toNamed(
-  AppRoutes.rab,
-  arguments: {
-    'luasBangunan': widget.totalLuas ??
-        (widget.inputLebarRumah * widget.inputPanjangRumah),
-
-    'estimasi_rab': controller.estimasiRab,
-
-    'inputLebarRumah': widget.inputLebarRumah,
-    'inputPanjangRumah': widget.inputPanjangRumah,
-
-    'material': widget.material,
-    'jumlahKamar': widget.jumlahKamar,
-    'ruangTambahan': widget.ruangTambahan,
-
-    'jenisTukang': widget.jenisTukang,
-    'selectedMaterials': widget.selectedMaterials,
-
-    'rooms': widget.rooms,
-  },
-);
-},
-              icon: const Icon(Icons.receipt_long_rounded),
-              label: const Text(
-                'LIHAT RAB',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
+  floatingActionButton: Padding(
+  padding: const EdgeInsets.only(bottom: 86),
+  child: FloatingActionButton.extended(
+    heroTag: 'rab_hasil_denah',
+    backgroundColor: const Color(0xFFE47B3E),
+    foregroundColor: Colors.white,
+    elevation: 8,
+    onPressed: () {
+      // ⭐ PASTIKAN RAB CONTROLLER DI-REGISTER
+      if (!Get.isRegistered<RabController>()) {
+        Get.put(RabController());
+      }
+      
+      final controller = Get.find<HasilDenahController>();
+      final double estimasi = controller.estimasiRab;
+      
+      Get.toNamed(
+        AppRoutes.rab,
+        arguments: {
+          'luasBangunan': widget.totalLuas ??
+              (widget.inputLebarRumah * widget.inputPanjangRumah),
+          'estimasi_rab': estimasi,
+          'totalBiaya': estimasi,
+          'inputLebarRumah': widget.inputLebarRumah,
+          'inputPanjangRumah': widget.inputPanjangRumah,
+          'material': widget.material,
+          'jumlahKamar': widget.jumlahKamar,
+          'ruangTambahan': widget.ruangTambahan,
+          'jenisTukang': widget.jenisTukang,
+          'selectedMaterials': widget.selectedMaterials,
+          'rooms': widget.rooms,
+        },
+      );
+    },
+    icon: const Icon(Icons.receipt_long_rounded),
+    label: const Text(
+      'LIHAT RAB',
+      style: TextStyle(
+        fontWeight: FontWeight.w900,
+      ),
+    ),
+  ),
+),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           body: SafeArea(
             child: Column(
@@ -195,7 +345,10 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
                           landWidth: landWidth,
                           landLength: landLength,
                         ),
-                        const SizedBox(height: 92),
+                        const SizedBox(height: 18),
+                        // ⭐ TAMBAHKAN AI RAB ANALYSIS
+                        _buildRABAnalysisSection(controller),
+                        const SizedBox(height: 18),
                       ],
                     ),
                   ),
@@ -214,6 +367,8 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     );
   }
 
+  // ============ EXISTING WIDGETS (tidak berubah) ============
+  
   Widget _buildPreviewCard({
     required List<RoomModel> rooms,
     required double landWidth,
@@ -242,7 +397,6 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
         children: [
           _buildPreviewHeader(),
           const SizedBox(height: 10),
-          // ✅ TAMBAHKAN INI - TAMPILAN UKURAN LAHAN
           _buildLandSizeInfo(),
           const SizedBox(height: 10),
           ClipRRect(
@@ -319,7 +473,7 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
                   color: textDark,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 'Denah rendered dengan furniture, taman, pintu, dan material',
                 style: TextStyle(
@@ -952,15 +1106,14 @@ class _HasilDenahPageState extends State<HasilDenahPage> {
     } catch (_) {}
 
     try {
-await controller.simpanDenah();
+      await controller.simpanDenah();
 
-Get.offAllNamed(
-  AppRoutes.dashboard,
-  arguments: 2,
-);
+      Get.offAllNamed(
+        AppRoutes.dashboard,
+        arguments: 2,
+      );
 
-
-} catch (error) {
+    } catch (error) {
       Get.snackbar(
         'Gagal Simpan',
         'Terjadi kesalahan: $error',

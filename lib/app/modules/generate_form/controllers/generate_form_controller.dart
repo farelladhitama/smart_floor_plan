@@ -480,7 +480,7 @@ class GenerateFormController extends GetxController {
       final double area = landWidth * landLength;
       final List<RoomRecommendation> extras = <RoomRecommendation>[];
 
-      for (final String name in extraRooms.take(8)) {
+      for (final String name in extraRooms) {  
         final String lowerName = name.toLowerCase();
         String category = 'room';
         double width = area <= 60 ? 1.8 : area <= 140 ? 2.2 : 2.8;
