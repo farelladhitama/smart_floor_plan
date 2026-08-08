@@ -128,14 +128,11 @@ class GenerateFormController extends GetxController {
   }
 
   void _applyAIParams(AIDesignParams params) {
-    // ⭐ FIX: Selalu timpa extra rooms dari AI
     final extraRooms = params.extraRooms;
     if (extraRooms.isNotEmpty) {
       tambahanRuanganController.text = extraRooms.join(', ');
     }
 
-    // ⭐ FIX: Selalu timpa ukuran lahan dari hasil kalkulasi AI
-    // Tidak lagi bergantung pada "if isEmpty" — AI selalu menentukan ukuran
     if (params.lebarLahan > 0) {
       lebarController.text = params.lebarLahan.toStringAsFixed(1);
     }
@@ -449,7 +446,6 @@ class GenerateFormController extends GetxController {
       rekomendasiRuang.assignAll(result);
       hasAnalyzedRecommendation.value = true;
 
-      // ⭐ TUNGGU 500ms, LALU TUTUP DIALOG
       await Future.delayed(const Duration(milliseconds: 500));
       _closeAllDialogs();
 
@@ -520,8 +516,8 @@ class GenerateFormController extends GetxController {
           height = area <= 60 ? 1.6 : 2.2;
         } else if (lowerName.contains('kolam') || lowerName.contains('pool')) {
           category = 'outdoor';
-          width = area <= 60 ? 2.0 : 3.0;
-          height = area <= 60 ? 2.0 : 3.0;
+          width = area <= 60 ? 3.0 : 4.0;
+          height = area <= 60 ? 3.0 : 4.0;
         }
 
         extras.add(
@@ -535,6 +531,7 @@ class GenerateFormController extends GetxController {
         );
       }
 
+      print('🏠 [AI] Extra rooms (${extras.length}): ${extras.map((r) => r.name).join(", ")}');
       return extras;
     }
 
@@ -675,8 +672,6 @@ class GenerateFormController extends GetxController {
     final double lebarRumah = double.parse(lebarController.text.trim());
     final double panjangRumah = double.parse(panjangController.text.trim());
 
-    // ⭐ FIX: Gunakan aiParams.bedroom langsung saat mode AI aktif
-    // (sebelumnya selalu dihitung ulang dari luas lahan saja)
     final int bedroomCount = (useAIAnalysis.value && aiParams.value != null)
         ? aiParams.value!.bedroom.clamp(1, 8)
         : estimateBedroomCount(
@@ -693,17 +688,13 @@ class GenerateFormController extends GetxController {
 
     final List<String> extraRoomNames = _extraRoomNames(extraRooms);
 
-    final SmartFloorPlanResult result = SmartFloorPlanEngine.generate(
+    print('🏠 [Generate] Extra rooms (${extraRooms.length}): ${extraRooms.map((r) => r.name).join(", ")}');
+
+    final SmartFloorPlanResult result = SmartFloorPlanEngine.generateFlexible(
       landWidth: lebarRumah,
       landLength: panjangRumah,
       bedroomCount: bedroomCount,
       extraRooms: extraRooms,
-      style: useAIAnalysis.value && aiParams.value != null 
-          ? aiParams.value!.style 
-          : 'Modern',
-      priority: useAIAnalysis.value && aiParams.value != null 
-          ? aiParams.value!.priority 
-          : 'Fungsi',
     );
 
     final List<RoomModel> generatedRooms = result.rooms;
@@ -834,9 +825,7 @@ class GenerateFormController extends GetxController {
     });
   }
 
-  // ⭐ METHOD PALING PENTING - CLOSE ALL DIALOGS
   void _closeAllDialogs() {
-    // TUNGGU 100ms AGAR DIALOG SIAP DITUTUP
     Future.delayed(const Duration(milliseconds: 100), () {
       try {
         int count = 0;
@@ -852,7 +841,6 @@ class GenerateFormController extends GetxController {
         }
       } catch (e) {
         print('⚠️ Error tutup dialog: $e');
-        // FORCE CLOSE PAKAI CARA LAIN
         try {
           if (Get.isDialogOpen == true) {
             Get.back();

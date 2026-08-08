@@ -938,4 +938,99 @@ class SmartFloorPlanEngine {
 
   static bool _overlap1D(double a0, double a1, double b0, double b1) =>
       a0 < b1 - 0.01 && b0 < a1 - 0.01;
+        // ═══════════════════════════════════════════════════════════════════════════
+  //  GENERATE FLEKSIBEL — SEMUA RUANGAN PASTI MASUK!
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static SmartFloorPlanResult generateFlexible({
+    required double landWidth,
+    required double landLength,
+    required int bedroomCount,
+    List<RoomRecommendation> extraRooms = const [],
+  }) {
+    final double W = _safe(landWidth, 8);
+    final double L = _safe(landLength, 10);
+
+    // Hitung total ruangan
+    int totalRooms = bedroomCount + extraRooms.length + 2; // +2 untuk dapur & km/wc
+    int cols = (totalRooms / 3).ceil();
+    if (cols < 2) cols = 2;
+    if (cols > 4) cols = 4;
+    int rows = (totalRooms / cols).ceil();
+    if (rows < 2) rows = 2;
+
+    double cellW = W / cols;
+    double cellH = L / rows;
+
+    final List<RoomModel> rooms = [];
+    int idx = 0;
+
+    // Kamar tidur
+    for (int i = 0; i < bedroomCount && idx < cols * rows; i++) {
+      int row = idx ~/ cols;
+      int col = idx % cols;
+      rooms.add(RoomModel(
+        nama: i == 0 ? 'K. Tidur Utama' : 'K. Tidur ${i + 1}',
+        category: 'bedroom',
+        x: col * cellW,
+        y: row * cellH,
+        width: cellW,
+        height: cellH,
+      ));
+      idx++;
+    }
+
+    // Extra rooms (SEMUA MASUK!)
+    for (int i = 0; i < extraRooms.length && idx < cols * rows; i++) {
+      int row = idx ~/ cols;
+      int col = idx % cols;
+      rooms.add(RoomModel(
+        nama: extraRooms[i].name,
+        category: extraRooms[i].category,
+        x: col * cellW,
+        y: row * cellH,
+        width: cellW,
+        height: cellH,
+      ));
+      idx++;
+    }
+
+    // Dapur (jika belum ada)
+    if (idx < cols * rows) {
+      int row = idx ~/ cols;
+      int col = idx % cols;
+      rooms.add(RoomModel(
+        nama: 'Dapur',
+        category: 'kitchen',
+        x: col * cellW,
+        y: row * cellH,
+        width: cellW,
+        height: cellH,
+      ));
+      idx++;
+    }
+
+    // KM/WC (jika belum ada)
+    if (idx < cols * rows) {
+      int row = idx ~/ cols;
+      int col = idx % cols;
+      rooms.add(RoomModel(
+        nama: 'KM/WC',
+        category: 'bath',
+        x: col * cellW,
+        y: row * cellH,
+        width: cellW,
+        height: cellH,
+      ));
+      idx++;
+    }
+
+    print('🏠 [Flexible] ${rooms.length} ruangan ditempatkan di grid ${cols}×${rows}');
+
+    return SmartFloorPlanResult(
+      landWidth: W,
+      landLength: L,
+      rooms: _normalize(rooms, W, L),
+    );
+  }
 }
