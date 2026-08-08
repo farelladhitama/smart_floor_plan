@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class AIRabAnalyzer {
-  static const String apiKey = "AQ.Ab8RN6JWaSkq8sUh7reqz2R-G3ged-QeiZkyF1YYvPt-TBjniw";
+  static const String apiKey = "GEMINI_API_KEY";
 
   static Future<String> analyze({
     required double totalBiaya,

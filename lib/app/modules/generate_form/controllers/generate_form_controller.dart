@@ -666,6 +666,7 @@ class GenerateFormController extends GetxController {
     analisisRekomendasiRuang();
   }
 
+  // ⭐ PROSES GENERATE — PAKAI generate() BUKAN generateFlexible()!
   Future<void> prosesGenerate() async {
     if (!formKey.currentState!.validate()) return;
 
@@ -690,11 +691,19 @@ class GenerateFormController extends GetxController {
 
     print('🏠 [Generate] Extra rooms (${extraRooms.length}): ${extraRooms.map((r) => r.name).join(", ")}');
 
-    final SmartFloorPlanResult result = SmartFloorPlanEngine.generateFlexible(
+    // ⭐ PAKAI generate() — BUKAN generateFlexible()!
+    // generate() menghasilkan layout NATURAL (template-based)
+    final SmartFloorPlanResult result = SmartFloorPlanEngine.generate(
       landWidth: lebarRumah,
       landLength: panjangRumah,
       bedroomCount: bedroomCount,
       extraRooms: extraRooms,
+      style: useAIAnalysis.value && aiParams.value != null 
+          ? aiParams.value!.style 
+          : 'Modern',
+      priority: useAIAnalysis.value && aiParams.value != null 
+          ? aiParams.value!.priority 
+          : 'Fungsi',
     );
 
     final List<RoomModel> generatedRooms = result.rooms;
